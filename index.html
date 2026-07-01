@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1720">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Breath">
+<title>Breath Trainer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+  :root {
+    --bg: #0f1720; --bg-elev: #182230; --bg-elev-2: #1f2b3c;
+    --ink: #f2ede3; --ink-dim: #8a94a3; --ink-faint: #4a5568;
+    --hold: #e8846b; --rest: #7ecab1; --gold: #d4a574; --line: #263241;
+  }
+  html, body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh; min-height: 100dvh; overflow-x: hidden;
+  }
+  body {
+    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+    max-width: 480px; margin: 0 auto;
+    display: flex; flex-direction: column;
+    min-height: 100vh; min-height: 100dvh;
+  }
+  header { padding: 20px 0 8px; text-align: center; }
+  h1 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 400; font-size: 22px; letter-spacing: 0.5px; }
+  .subtitle { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+  .tabs { display: flex; background: var(--bg-elev); border-radius: 12px; padding: 4px; margin: 16px 0 12px; border: 1px solid var(--line); }
+  .tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; letter-spacing: 1px; color: var(--ink-dim);
+    background: transparent; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; font-family: inherit; }
+  .tab.active { background: var(--bg-elev-2); color: var(--ink); }
+
+  .view { display: none; flex-direction: column; flex: 1; }
+  .view.active { display: flex; }
+
+  .suggestion { display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 12px; color: var(--ink-dim); letter-spacing: 1px; margin-bottom: 12px; min-height: 18px; }
+  .suggestion .chip { color: var(--gold); font-weight: 500; }
+
+  .mode-picker { display: flex; gap: 8px; margin-bottom: 10px; }
+  .mode-picker button {
+    flex: 1; padding: 12px 6px; background: var(--bg-elev); color: var(--ink-dim);
+    border: 1px solid var(--line); border-radius: 12px; font-size: 12px;
+    cursor: pointer; font-family: inherit; line-height: 1.4;
+  }
+  .mode-picker button.active { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 500; }
+  .mode-picker button small { display: block; font-size: 10px; opacity: 0.7; letter-spacing: 0.5px; }
+
+  .level-picker { display: flex; gap: 8px; margin-bottom: 8px; }
+  .level-picker button {
+    flex: 1; padding: 10px 8px; background: var(--bg-elev); color: var(--ink-dim);
+    border: 1px solid var(--line); border-radius: 12px; font-size: 12px;
+    cursor: pointer; font-family: inherit; line-height: 1.4;
+  }
+  .level-picker button.active { background: var(--bg-elev-2); color: var(--ink); border-color: var(--ink-dim); font-weight: 500; }
+  .mode-note { font-size: 11px; color: var(--ink-dim); text-align: center; margin-bottom: 10px; min-height: 14px; letter-spacing: 0.5px; }
+
+  .stage { background: var(--bg-elev); border-radius: 24px; padding: 28px 20px; margin-bottom: 14px;
+    text-align: center; border: 1px solid var(--line); transition: border-color 0.4s; cursor: pointer; }
+  .stage.is-hold { border-color: var(--hold); }
+  .stage.is-rest { border-color: var(--rest); }
+  .stage.is-target-reached { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+
+  .state-label { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 8px; transition: color 0.3s; }
+  .stage.is-hold .state-label { color: var(--hold); }
+  .stage.is-rest .state-label { color: var(--rest); }
+  .stage.is-target-reached .state-label { color: var(--gold); }
+
+  .timer { font-family: "SF Mono", "Menlo", "Courier New", monospace; font-size: 76px; font-weight: 200;
+    line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
+  .target-note { font-size: 12px; color: var(--ink-dim); margin-top: 8px; letter-spacing: 1px; min-height: 15px; }
+  .round-info { font-size: 13px; color: var(--ink-dim); margin-top: 10px; letter-spacing: 1px; }
+
+  .action-btn { width: 100%; padding: 20px; background: var(--hold); color: var(--bg); border: none;
+    border-radius: 14px; font-size: 16px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; font-family: inherit; margin-bottom: 12px; transition: transform 0.1s; }
+  .action-btn:active { transform: scale(0.98); }
+  .action-btn.hidden { display: none; }
+
+  .controls { display: flex; gap: 10px; margin-bottom: 16px; }
+  .controls button { flex: 1; padding: 14px; background: var(--bg-elev); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 12px; font-size: 14px; letter-spacing: 0.5px;
+    cursor: pointer; font-family: inherit; }
+  .controls button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 500; }
+
+  .rounds { background: var(--bg-elev); border-radius: 16px; padding: 4px 0; border: 1px solid var(--line); margin-bottom: 16px; }
+  .round-row { display: flex; align-items: center; padding: 11px 18px; gap: 14px; border-bottom: 1px solid var(--line); }
+  .round-row:last-child { border-bottom: none; }
+  .round-row.active { background: rgba(255,255,255,0.03); }
+
+  .round-dot { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--ink-faint);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .round-dot.checked { background: var(--rest); border-color: var(--rest); }
+  .round-dot.checked::after { content: ""; width: 4px; height: 9px; border: solid var(--bg);
+    border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+
+  .round-num { font-family: "SF Mono", monospace; font-size: 12px; color: var(--ink-dim); width: 22px; }
+  .round-row.completed .round-num { color: var(--ink-faint); }
+
+  .round-detail { flex: 1; display: flex; justify-content: space-between; font-size: 13px; align-items: center; }
+  .hold-time { color: var(--hold); font-weight: 500; }
+  .round-row.completed .hold-time { color: var(--ink-faint); }
+  .hold-actual { color: var(--gold); font-weight: 500; font-size: 12px; margin-left: 6px; }
+  .hold-actual.under { color: var(--ink-dim); }
+  .rest-time { color: var(--ink-dim); font-size: 12px; }
+
+  .safety { font-size: 11px; color: var(--ink-dim); text-align: center; padding: 10px 16px 20px; line-height: 1.6; }
+  .safety strong { color: var(--hold); font-weight: 500; }
+
+  .goal-card { background: var(--bg-elev); border: 1px solid var(--gold); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .goal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .goal-title { font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+  .goal-days { font-size: 11px; color: var(--ink-dim); }
+  .goal-numbers { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .goal-pb { font-family: "SF Mono", monospace; font-size: 32px; font-weight: 300; letter-spacing: -1px; }
+  .goal-target { font-size: 12px; color: var(--ink-dim); text-align: right; line-height: 1.5; }
+  .goal-bar { height: 6px; background: var(--bg-elev-2); border-radius: 3px; overflow: hidden; position: relative; }
+  .goal-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.5s; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .stat-label { font-size: 10px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-family: "SF Mono", monospace; font-size: 28px; font-weight: 300; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .stat-value.gold { color: var(--gold); }
+  .stat-value.rest { color: var(--rest); }
+  .stat-sub { font-size: 11px; color: var(--ink-dim); margin-top: 4px; }
+
+  .strip-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; }
+  .strip-row { display: flex; justify-content: space-between; margin-top: 10px; }
+  .strip-day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .strip-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--bg-elev-2); border: 1px solid var(--line); }
+  .strip-dot.on { background: var(--rest); border-color: var(--rest); }
+  .strip-label { font-size: 9px; color: var(--ink-faint); }
+  .strip-day.today .strip-label { color: var(--ink-dim); font-weight: 600; }
+
+  .chart-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .chart-title { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .chart-svg { width: 100%; height: 130px; display: block; }
+
+  .session-list-title { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin: 8px 4px 10px; }
+  .session-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; }
+  .session-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .session-date { font-size: 13px; }
+  .session-level { font-size: 11px; color: var(--ink-dim); letter-spacing: 1px; }
+  .session-holds { display: flex; flex-wrap: wrap; gap: 4px; }
+  .hold-pill { font-family: "SF Mono", monospace; font-size: 11px; padding: 3px 8px; background: var(--bg-elev-2);
+    border-radius: 6px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .hold-pill.hit { color: var(--gold); background: rgba(212, 165, 116, 0.12); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--ink-dim); font-size: 14px; line-height: 1.6; }
+  .data-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .data-btns button { flex: 1; padding: 12px; background: transparent; color: var(--ink-dim); border: 1px solid var(--line);
+    border-radius: 12px; font-size: 12px; letter-spacing: 1px; cursor: pointer; font-family: inherit; }
+
+  @media (max-height: 700px) { .stage { padding: 22px 20px; } .timer { font-size: 64px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Breath Trainer</h1>
+  <div class="subtitle">toward 2:00 by October 31</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-view="train">Train</button>
+  <button class="tab" data-view="history">Progress</button>
+</div>
+
+<div class="view active" id="view-train">
+  <div class="suggestion" id="suggestion"></div>
+
+  <div class="mode-picker" id="modePicker">
+    <button data-mode="co2" class="active">CO₂ Table<small>fixed hold · shrinking rest</small></button>
+    <button data-mode="o2">O₂ Table<small>growing hold · fixed rest</small></button>
+    <button data-mode="max">Max Test<small>one all-out hold</small></button>
+  </div>
+
+  <div class="level-picker" id="levelPicker">
+    <button data-hold="45" class="active">Beginner<br>45s</button>
+    <button data-hold="60">Standard<br>60s</button>
+    <button data-hold="75">Advanced<br>75s</button>
+  </div>
+  <div class="mode-note" id="modeNote"></div>
+
+  <div class="stage" id="stage">
+    <div class="state-label" id="stateLabel">Ready</div>
+    <div class="timer" id="timer">00:00</div>
+    <div class="target-note" id="targetNote"></div>
+    <div class="round-info" id="roundInfo">Tap Start when you're ready</div>
+  </div>
+
+  <button class="action-btn hidden" id="releaseBtn">Release</button>
+
+  <div class="controls">
+    <button id="startBtn" class="primary">Start</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <div class="rounds" id="rounds"></div>
+
+  <div class="safety">
+    <strong>Never practice in or near water. Never hyperventilate first.</strong><br>
+    Sit or lie down. Breathe calmly between holds — don't gulp air.<br>
+    Stop immediately if you feel dizzy or tingly. One table session per day.
+  </div>
+</div>
+
+<div class="view" id="view-history">
+  <div id="historyContent"></div>
+</div>
+
+<input type="file" id="importFile" accept=".json,application/json" style="display:none">
+
+<script>
+  const CO2_REST_PATTERN = [105, 90, 75, 60, 45, 30, 20, 15];
+  const O2_RAMP = [0.40, 0.46, 0.52, 0.58, 0.64, 0.70, 0.75, 0.80];
+  const O2_REST = 120;
+  const STORAGE_KEY = 'co2trainer_sessions_v1';
+  const GOAL_DATE = new Date(2026, 9, 31, 23, 59, 59); // Oct 31 2026
+  const GOAL_SEC = 120, STRETCH_SEC = 180;
+  const WEEKLY_TARGET = 5;
+
+  let mode = 'co2';
+  let holdDuration = 45;        // co2 level
+  let plan = [];                // [{target, rest, done, actual}]
+  let currentRound = 0;
+  let phase = 'idle';           // idle | prep | hold | rest | done
+  let phaseStart = 0;           // ms timestamp of phase start
+  let phaseDuration = 0;        // seconds, for prep/rest countdowns
+  let pausedAt = null;
+  let ticker = null;
+  let holdActuals = [];
+  let targetBeeped = false;
+  let pbBeeped = false;
+  let lastMilestone = 0;
+  let lastRemBeep = -1;
+  let audioCtx = null;
+  let wakeLock = null;
+
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), stateLabel = $('stateLabel'), timerEl = $('timer');
+  const targetNote = $('targetNote'), roundInfoEl = $('roundInfo');
+  const startBtn = $('startBtn'), resetBtn = $('resetBtn'), releaseBtn = $('releaseBtn');
+  const roundsEl = $('rounds'), levelPicker = $('levelPicker'), modePicker = $('modePicker');
+  const modeNote = $('modeNote'), suggestionEl = $('suggestion');
+
+  // ---------- storage ----------
+  function loadSessions() {
+    try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }
+    catch(e) { return []; }
+  }
+  function saveSession(session) {
+    try {
+      const all = loadSessions();
+      all.unshift(session);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(all.slice(0, 400)));
+    } catch(e) {}
+  }
+  function overwriteSessions(all) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(all.slice(0, 400))); } catch(e) {}
+  }
+  function clearSessions() { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} }
+  function sessionMode(s) { return s.mode || 'co2'; }
+  function personalBest() {
+    const holds = loadSessions().flatMap(s => s.holds || []);
+    return holds.length ? Math.max(...holds) : null;
+  }
+
+  // ---------- helpers ----------
+  function fmt(s) {
+    s = Math.max(0, Math.floor(s));
+    const m = Math.floor(s / 60), sec = s % 60;
+    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  }
+  function fmtShort(s) { return s >= 60 ? `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}` : `${s}s`; }
+
+  function beep(freq = 660, duration = 0.15, volume = 0.3) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+  }
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e) {} }
+
+  async function requestWakeLock() {
+    try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+  }
+  function releaseWakeLock() { if (wakeLock) { wakeLock.release(); wakeLock = null; } }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && phase !== 'idle' && phase !== 'done' && !pausedAt) requestWakeLock();
+  });
+
+  // ---------- plan ----------
+  function buildPlan() {
+    if (mode === 'co2') {
+      plan = CO2_REST_PATTERN.map(rest => ({ target: holdDuration, rest, done: false, actual: null }));
+    } else if (mode === 'o2') {
+      const pb = personalBest() || 60;
+      plan = O2_RAMP.map(p => ({
+        target: Math.max(15, Math.round(pb * p / 5) * 5),
+        rest: O2_REST, done: false, actual: null
+      }));
+    } else {
+      plan = [{ target: null, rest: 0, done: false, actual: null }];
+    }
+    renderRounds();
+    renderModeNote();
+  }
+
+  function renderModeNote() {
+    const pb = personalBest();
+    if (mode === 'co2') {
+      levelPicker.style.display = 'flex';
+      modeNote.textContent = pb ? `Tip: pick a hold near half your best (${fmtShort(Math.round(pb/2))})` : 'New? Start with Beginner.';
+    } else if (mode === 'o2') {
+      levelPicker.style.display = 'none';
+      modeNote.textContent = pb ? `Targets scale from your best: ${fmtShort(pb)}` : 'No best yet — using a starter table. Do a Max Test soon.';
+    } else {
+      levelPicker.style.display = 'none';
+      modeNote.textContent = pb ? `Your best: ${fmtShort(pb)} — beat it.` : 'First max test sets your baseline. 2 min of calm breathing, then one relaxed all-out hold.';
+    }
+  }
+
+  function renderRounds() {
+    if (mode === 'max') {
+      roundsEl.innerHTML = `
+        <div class="round-row">
+          <div class="round-dot ${plan[0] && plan[0].done ? 'checked' : ''}"></div>
+          <div class="round-num">01</div>
+          <div class="round-detail">
+            <span><span class="hold-time">Max hold</span>${plan[0] && plan[0].actual != null ? `<span class="hold-actual">${fmtShort(plan[0].actual)}</span>` : ''}</span>
+            <span class="rest-time">after 2:00 calm breathing</span>
+          </div>
+        </div>`;
+      return;
+    }
+    roundsEl.innerHTML = plan.map((r, i) => {
+      const actualHtml = r.actual != null
+        ? `<span class="hold-actual ${r.actual < r.target ? 'under' : ''}">${r.actual}s actual</span>`
+        : '';
+      return `
+        <div class="round-row ${i === currentRound && (phase === 'hold' || phase === 'rest') ? 'active' : ''} ${r.done ? 'completed' : ''}">
+          <div class="round-dot ${r.done ? 'checked' : ''}"></div>
+          <div class="round-num">${String(i+1).padStart(2,'0')}</div>
+          <div class="round-detail">
+            <span><span class="hold-time">Hold ${r.target}s</span>${actualHtml}</span>
+            <span class="rest-time">${i === plan.length - 1 ? 'final' : 'rest ' + r.rest + 's'}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ---------- suggestion (what should today be?) ----------
+  function todaysSuggestion() {
+    const sessions = loadSessions();
+    if (!sessions.length) return { mode: 'max', text: 'Start with a <span class="chip">Max Test</span> to set your baseline' };
+    const todayKey = new Date().toDateString();
+    if (sessions.some(s => new Date(s.date).toDateString() === todayKey))
+      return { mode: null, text: 'Trained today ✓ — recovery is part of the program' };
+    const now = Date.now();
+    const lastMax = sessions.find(s => sessionMode(s) === 'max');
+    if (!lastMax || now - new Date(lastMax.date).getTime() > 7 * 86400000)
+      return { mode: 'max', text: 'Weekly check-in: <span class="chip">Max Test</span>' };
+    const lastTable = sessions.find(s => sessionMode(s) !== 'max');
+    if (lastTable && sessionMode(lastTable) === 'co2')
+      return { mode: 'o2', text: 'Today: <span class="chip">O₂ Table</span> (you did CO₂ last)' };
+    return { mode: 'co2', text: 'Today: <span class="chip">CO₂ Table</span>' };
+  }
+  function renderSuggestion() {
+    const s = todaysSuggestion();
+    suggestionEl.innerHTML = s.text;
+  }
+
+  // ---------- timing (timestamp-based; survives throttling) ----------
+  function elapsedSec() { return (Date.now() - phaseStart) / 1000; }
+  function remainingSec() { return phaseDuration - elapsedSec(); }
+  function startTicker() { clearInterval(ticker); ticker = setInterval(tick, 200); }
+  function stopTicker() { clearInterval(ticker); ticker = null; }
+
+  function tick() {
+    if (phase === 'hold') {
+      const t = Math.floor(elapsedSec());
+      const target = plan[currentRound].target;
+      if (target != null && !targetBeeped && t >= target) {
+        targetBeeped = true; beep(880, 0.4, 0.35); buzz(200);
+      }
+      if (mode === 'max') {
+        const pb = personalBest();
+        if (pb && !pbBeeped && t > pb) { pbBeeped = true; beep(1046, 0.5, 0.4); buzz([100,80,100]); }
+        const ms = Math.floor(t / 30);
+        if (ms > lastMilestone) { lastMilestone = ms; if (!pbBeeped || t % 30 === 0) beep(587, 0.12, 0.18); }
+      }
+      updateUI();
+    } else if (phase === 'rest' || phase === 'prep') {
+      const rem = Math.ceil(remainingSec());
+      if (rem !== lastRemBeep && rem <= 3 && rem > 0) { lastRemBeep = rem; beep(880, 0.08, 0.15); }
+      if (rem <= 0) { advance(); return; }
+      updateUI();
+    }
+  }
+
+  function advance() {
+    stopTicker();
+    if (phase === 'prep') startHold();
+    else if (phase === 'rest') { currentRound++; startHold(); }
+  }
+
+  function startHold() {
+    phase = 'hold';
+    phaseStart = Date.now();
+    targetBeeped = false; pbBeeped = false; lastMilestone = 0;
+    beep(523, 0.3, 0.4); buzz(120);
+    renderRounds(); updateUI();
+    startTicker();
+  }
+
+  function release() {
+    if (phase !== 'hold') return;
+    stopTicker();
+    const actual = Math.floor(elapsedSec());
+    plan[currentRound].actual = actual;
+    plan[currentRound].done = true;
+    holdActuals.push(actual);
+    beep(784, 0.3, 0.4);
+
+    if (currentRound >= plan.length - 1) { finish(); return; }
+    phase = 'rest';
+    phaseStart = Date.now();
+    phaseDuration = plan[currentRound].rest;
+    lastRemBeep = -1;
+    renderRounds(); updateUI();
+    startTicker();
+  }
+
+  function finish() {
+    phase = 'done';
+    const pb = personalBest();
+    const newBest = pb == null || Math.max(...holdActuals) > pb;
+    beep(1046, 0.4, 0.4);
+    setTimeout(() => beep(1318, 0.5, 0.4), 200);
+    saveSession({
+      date: new Date().toISOString(),
+      mode,
+      level: mode === 'co2' ? holdDuration : null,
+      targets: plan.map(r => r.target),
+      holds: holdActuals.slice()
+    });
+    releaseWakeLock();
+    startBtn.textContent = 'Start';
+    renderRounds(); updateUI(); renderSuggestion();
+    if (newBest && mode === 'max') {
+      stateLabel.textContent = 'New personal best';
+      stage.classList.add('is-target-reached');
+    }
+  }
+
+  function beginSession() {
+    currentRound = 0;
+    holdActuals = [];
+    buildPlan();
+    phase = 'prep';
+    phaseStart = Date.now();
+    phaseDuration = mode === 'max' ? 120 : 10;
+    lastRemBeep = -1;
+    pausedAt = null;
+    beep(440, 0.1, 0.2);
+    requestWakeLock();
+    renderRounds(); updateUI();
+    startTicker();
+  }
+
+  // ---------- UI ----------
+  function updateUI() {
+    stage.classList.remove('is-hold', 'is-rest', 'is-target-reached');
+    releaseBtn.classList.add('hidden');
+    targetNote.textContent = '';
+
+    if (phase === 'hold') {
+      const t = Math.floor(elapsedSec());
+      const target = plan[currentRound].target;
+      stage.classList.add('is-hold');
+      if (target != null && t >= target) stage.classList.add('is-target-reached');
+      if (mode === 'max') {
+        const pb = personalBest();
+        if (pb && t > pb) stage.classList.add('is-target-reached');
+        stateLabel.textContent = (pb && t > pb) ? 'New best — keep going' : 'Hold';
+        targetNote.textContent = pb ? `best ${fmtShort(pb)} · goal ${fmtShort(GOAL_SEC)}` : `goal ${fmtShort(GOAL_SEC)}`;
+      } else {
+        stateLabel.textContent = (t >= target) ? 'Target reached — release when ready' : 'Hold';
+        targetNote.textContent = `target ${target}s`;
+      }
+      timerEl.textContent = fmt(t);
+      roundInfoEl.textContent = mode === 'max' ? 'Tap anywhere to release' : `Round ${currentRound + 1} of ${plan.length} · tap to release`;
+      releaseBtn.classList.remove('hidden');
+    } else if (phase === 'rest') {
+      stage.classList.add('is-rest');
+      stateLabel.textContent = 'Breathe';
+      timerEl.textContent = fmt(Math.ceil(remainingSec()));
+      const next = plan[currentRound + 1];
+      targetNote.textContent = next ? `next hold: ${next.target}s` : '';
+      roundInfoEl.textContent = 'Calm, gentle breaths — don\'t gulp air';
+    } else if (phase === 'prep') {
+      stateLabel.textContent = mode === 'max' ? 'Breathe up — calm & slow' : 'Get ready';
+      timerEl.textContent = fmt(Math.ceil(remainingSec()));
+      roundInfoEl.textContent = mode === 'max' ? 'Normal breaths. Never hyperventilate. Tap to skip' : 'Slow, calm breaths · tap to skip';
+    } else if (phase === 'done') {
+      stateLabel.textContent = 'Complete';
+      timerEl.textContent = '✓';
+      roundInfoEl.textContent = holdActuals.length ? `Best this session: ${fmtShort(Math.max(...holdActuals))} · logged` : 'Session logged';
+    } else {
+      stateLabel.textContent = 'Ready';
+      timerEl.textContent = '00:00';
+      roundInfoEl.textContent = 'Tap Start when you\'re ready';
+    }
+  }
+
+  // ---------- controls ----------
+  startBtn.addEventListener('click', () => {
+    if (phase === 'idle' || phase === 'done') {
+      beginSession();
+      startBtn.textContent = 'Pause';
+    } else if (!pausedAt) {
+      pausedAt = Date.now();
+      stopTicker();
+      startBtn.textContent = 'Resume';
+    } else {
+      phaseStart += Date.now() - pausedAt;
+      pausedAt = null;
+      startTicker();
+      startBtn.textContent = 'Pause';
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    stopTicker();
+    phase = 'idle';
+    currentRound = 0; holdActuals = []; pausedAt = null;
+    buildPlan();
+    releaseWakeLock();
+    startBtn.textContent = 'Start';
+    updateUI();
+  });
+
+  releaseBtn.addEventListener('click', release);
+  stage.addEventListener('click', () => {
+    if (pausedAt) return;
+    if (phase === 'hold') release();
+    else if (phase === 'prep') advance();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space') return;
+    e.preventDefault();
+    if (phase === 'hold') release();
+    else if (phase === 'idle' || phase === 'done') startBtn.click();
+  });
+
+  modePicker.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn || (phase !== 'idle' && phase !== 'done')) return;
+    modePicker.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    phase = 'idle';
+    startBtn.textContent = 'Start';
+    buildPlan(); updateUI();
+  });
+
+  levelPicker.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn || (phase !== 'idle' && phase !== 'done')) return;
+    levelPicker.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    holdDuration = +btn.dataset.hold;
+    buildPlan();
+  });
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      $('view-' + tab.dataset.view).classList.add('active');
+      if (tab.dataset.view === 'history') renderHistory();
+    });
+  });
+
+  // ---------- history / progress ----------
+  function formatDate(iso) {
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 86400000);
+    const isSameDay = (a, b) => a.toDateString() === b.toDateString();
+    const time = d.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+    if (isSameDay(d, today)) return `Today · ${time}`;
+    if (isSameDay(d, yesterday)) return `Yesterday · ${time}`;
+    return d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' · ' + time;
+  }
+  const MODE_LABEL = { co2: 'CO₂', o2: 'O₂', max: 'MAX' };
+
+  function weekMonday(d) {
+    const dt = new Date(d);
+    dt.setHours(0,0,0,0);
+    dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+    return dt.getTime();
+  }
+
+  function consistencyStats(sessions) {
+    const now = Date.now();
+    const last7 = sessions.filter(s => now - new Date(s.date).getTime() < 7 * 86400000).length;
+
+    const dayKeys = new Set(sessions.map(s => new Date(s.date).toDateString()));
+    const strip = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now - i * 86400000);
+      strip.push({ label: 'MTWTFSS'[(d.getDay() + 6) % 7], on: dayKeys.has(d.toDateString()), today: i === 0 });
+    }
+
+    const perWeek = {};
+    sessions.forEach(s => { const k = weekMonday(new Date(s.date)); perWeek[k] = (perWeek[k] || 0) + 1; });
+    let streak = 0;
+    let wk = weekMonday(new Date());
+    if ((perWeek[wk] || 0) >= 4) { streak++; }
+    wk -= 7 * 86400000;
+    while ((perWeek[wk] || 0) >= 4) { streak++; wk -= 7 * 86400000; }
+
+    return { last7, strip, weekStreak: streak };
+  }
+
+  function renderChart(sessions) {
+    const data = sessions.slice(0, 30).reverse().map(s => Math.max(...s.holds));
+    if (data.length < 2) return '';
+    const w = 320, h = 110, pad = 10;
+    const max = Math.max(...data, GOAL_SEC + 15);
+    const min = 0;
+    const range = Math.max(max - min, 10);
+    const yOf = v => h - pad - ((v - min) / range) * (h - pad*2);
+    const stepX = (w - pad*2) / (data.length - 1);
+    const pts = data.map((v, i) => [pad + i * stepX, yOf(v)]);
+    const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const area = path + ` L ${pts[pts.length-1][0]},${h} L ${pts[0][0]},${h} Z`;
+    const dots = pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="#d4a574"/>`).join('');
+    const gy = yOf(GOAL_SEC).toFixed(1);
+    return `
+      <svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <line x1="${pad}" y1="${gy}" x2="${w-pad}" y2="${gy}" stroke="#7ecab1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+        <text x="${w-pad}" y="${gy - 4}" text-anchor="end" font-size="9" fill="#7ecab1" opacity="0.8">2:00 goal</text>
+        <path d="${area}" fill="#d4a574" fill-opacity="0.1"/>
+        <path d="${path}" stroke="#d4a574" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+        ${dots}
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-dim);margin-top:4px;letter-spacing:1px">
+        <span>${data.length} session${data.length !== 1 ? 's' : ''}</span>
+        <span>best: ${fmtShort(Math.max(...data))}</span>
+      </div>
+    `;
+  }
+
+  function renderHistory() {
+    const sessions = loadSessions();
+    const container = $('historyContent');
+    if (sessions.length === 0) {
+      container.innerHTML = `<div class="empty-state">No sessions yet.<br>Start with a Max Test to set your baseline.</div>`;
+      return;
+    }
+    const pb = personalBest();
+    const daysLeft = Math.max(0, Math.ceil((GOAL_DATE - Date.now()) / 86400000));
+    const pct = Math.min(100, Math.round((pb / GOAL_SEC) * 100));
+    const cons = consistencyStats(sessions);
+    const recentHolds = sessions.slice(0, 5).flatMap(s => s.holds);
+    const avg = Math.round(recentHolds.reduce((a,b) => a+b, 0) / recentHolds.length);
+
+    container.innerHTML = `
+      <div class="goal-card">
+        <div class="goal-head">
+          <div class="goal-title">Goal · 2:00 hold</div>
+          <div class="goal-days">${daysLeft} days left</div>
+        </div>
+        <div class="goal-numbers">
+          <div class="goal-pb">${fmtShort(pb)}</div>
+          <div class="goal-target">${pct}% of 2:00${pb >= GOAL_SEC ? ` · stretch: ${fmtShort(STRETCH_SEC)}` : ''}</div>
+        </div>
+        <div class="goal-bar"><div class="goal-bar-fill" style="width:${pb >= GOAL_SEC ? Math.min(100, Math.round(pb/STRETCH_SEC*100)) : pct}%"></div></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">This week</div>
+          <div class="stat-value rest">${cons.last7}<span style="font-size:16px;color:var(--ink-dim)">/${WEEKLY_TARGET}</span></div>
+          <div class="stat-sub">sessions, last 7 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Week streak</div>
+          <div class="stat-value gold">${cons.weekStreak}</div>
+          <div class="stat-sub">weeks with 4+ sessions</div>
+        </div>
+      </div>
+
+      <div class="strip-card">
+        <div class="stat-label">Last 14 days</div>
+        <div class="strip-row">
+          ${cons.strip.map(d => `
+            <div class="strip-day ${d.today ? 'today' : ''}">
+              <div class="strip-dot ${d.on ? 'on' : ''}"></div>
+              <div class="strip-label">${d.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Best hold per session</div>
+        ${renderChart(sessions) || '<div style="font-size:12px;color:var(--ink-dim);padding:12px 0">Complete a second session to see progress.</div>'}
+      </div>
+
+      <div class="session-list-title">Recent sessions</div>
+      ${sessions.slice(0, 20).map(s => {
+        const best = Math.max(...s.holds);
+        const m = sessionMode(s);
+        const desc = m === 'max' ? `max test · ${fmtShort(best)}`
+          : m === 'o2' ? `O₂ table · best ${fmtShort(best)}`
+          : `CO₂ ${s.level || ''}s · best ${fmtShort(best)}`;
+        return `
+          <div class="session-card">
+            <div class="session-head">
+              <div class="session-date">${formatDate(s.date)}</div>
+              <div class="session-level">${desc}</div>
+            </div>
+            <div class="session-holds">
+              ${s.holds.map((h2, i) => {
+                const tgt = s.targets ? s.targets[i] : s.level;
+                return `<span class="hold-pill ${tgt != null && h2 >= tgt ? 'hit' : (m === 'max' ? 'hit' : '')}">${h2}s</span>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('')}
+      <div class="data-btns">
+        <button id="exportBtn">Export data</button>
+        <button id="importBtn">Import</button>
+        <button id="clearBtn">Clear all</button>
+      </div>
+    `;
+
+    $('clearBtn').addEventListener('click', () => {
+      if (confirm('Delete all session history? This cannot be undone.')) { clearSessions(); renderHistory(); }
+    });
+    $('exportBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(loadSessions(), null, 2)], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'breath-trainer-data.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    });
+    $('importBtn').addEventListener('click', () => $('importFile').click());
+  }
+
+  $('importFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const incoming = JSON.parse(reader.result);
+        if (!Array.isArray(incoming)) throw new Error('bad format');
+        const existing = loadSessions();
+        const seen = new Set(existing.map(s => s.date));
+        const merged = existing.concat(incoming.filter(s => s && s.date && Array.isArray(s.holds) && !seen.has(s.date)));
+        merged.sort((a, b) => new Date(b.date) - new Date(a.date));
+        overwriteSessions(merged);
+        renderHistory();
+        alert('Import complete.');
+      } catch(err) { alert('Could not read that file — expected a breath-trainer JSON export.'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ---------- init ----------
+  buildPlan();
+  updateUI();
+  renderSuggestion();
+</script>
+
+</body>
+</html>
