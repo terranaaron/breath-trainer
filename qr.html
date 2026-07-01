@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breath Trainer — Scan to Open</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #0f1720; color: #f2ede3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 40px 20px; gap: 24px;
+  }
+  h1 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 400; font-size: 30px; letter-spacing: 0.5px; }
+  .sub { font-size: 12px; color: #8a94a3; letter-spacing: 2px; text-transform: uppercase; }
+  .card { background: #fff; padding: 20px; border-radius: 20px; line-height: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+  .card img { width: 300px; max-width: 72vw; height: auto; display: block; }
+  .url { font-family: "SF Mono", Menlo, "Courier New", monospace; font-size: 14px; color: #d4a574; word-break: break-all; }
+  .hint { font-size: 13px; color: #8a94a3; max-width: 340px; line-height: 1.6; }
+  @media print {
+    body { background: #fff; color: #000; }
+    .sub, .hint { color: #444; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+    .url { color: #000; }
+  }
+</style>
+</head>
+<body>
+  <div>
+    <h1>Breath Trainer</h1>
+    <div class="sub">Scan to open</div>
+  </div>
+  <div class="card">
+    <img src="breath-trainer-qr.svg" alt="QR code linking to the Breath Trainer app">
+  </div>
+  <div class="url">terranaaron.github.io/breath-trainer</div>
+  <div class="hint">Point your phone camera at the code, tap the link, then use
+    Share → Add to Home Screen to keep it like an app.</div>
+</body>
+</html>

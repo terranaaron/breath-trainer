@@ -3,6 +3,15 @@
 A breath-hold training app for one goal: **a 2:00 hold (stretch: 3:00) by October 31**.
 Runs entirely in the browser — no accounts, no server, your data stays on your device.
 
+**Live:** https://terranaaron.github.io/breath-trainer/
+
+### Scan to open on your phone
+
+<img src="breath-trainer-qr.png" alt="QR code linking to the Breath Trainer app" width="220">
+
+Point your phone camera at this code (or open [`qr.html`](qr.html) for a full-screen,
+printable version). It opens the live app — then use Share → **Add to Home Screen**.
+
 ## Training modes
 
 | Mode | What it is | When |

@@ -25,6 +25,12 @@ Personal training tool, not a venture. Goal: Aaron holds his breath 2:00
 `git push` to `main` → GitHub Pages redeploys automatically (~1 min).
 Live at: https://terranaaron.github.io/breath-trainer/
 
+## QR code
+
+`breath-trainer-qr.{svg,png}` and `qr.html` point at the live URL. Regenerate with
+`python -c "import segno; segno.make('https://terranaaron.github.io/breath-trainer/', error='h').save('breath-trainer-qr.svg', scale=8, border=4, dark='#0f1720', light='#fff')"`
+(also emit the `.png`). If the live URL ever changes, regenerate both and re-verify by scanning.
+
 ## Verify a change
 
 `node --check` the extracted script block, then render with headless Edge
