@@ -27,10 +27,24 @@ The app suggests which session to do today, tracks weekly consistency
 - Beep at target · milestone beeps every 30s on max tests · triple-beep when a rest ends
 - The screen stays awake during a session (Wake Lock)
 
+## Sharing it with other people
+
+Just send them the link. History is stored **per device, per browser** — every
+person's phone keeps its own private log, and nothing is ever uploaded anywhere.
+On first run the app asks for a name, which is bound to that device's log: it shows
+in the header, labels data exports (`breath-trainer-aaron.json`), and the app warns
+if you try to import a file that belongs to someone else.
+
+Two people sharing **one** device/browser would share one log — if that comes up,
+use separate browsers (e.g., Safari vs. Chrome) or ask for a profiles feature.
+
 ## Your data
 
 History lives in your browser's `localStorage` (per device). Use **Export data** /
-**Import** on the Progress tab to move history between devices.
+**Import** on the Progress tab to back it up or move it between your own devices.
+**Add the app to your home screen** — besides the app-like feel, iOS gives
+home-screen web apps durable storage, while a plain Safari tab left unvisited for
+a week can have its site data evicted.
 
 ## Safety — read this
 

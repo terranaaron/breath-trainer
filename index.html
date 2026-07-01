@@ -28,7 +28,18 @@
   }
   header { padding: 20px 0 8px; text-align: center; }
   h1 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 400; font-size: 22px; letter-spacing: 0.5px; }
-  .subtitle { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+  .subtitle { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; cursor: pointer; }
+
+  .setup-card { background: var(--bg-elev); border: 1px solid var(--gold); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .setup-title { font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .setup-sub { font-size: 12px; color: var(--ink-dim); margin-bottom: 12px; line-height: 1.5; }
+  .setup-row { display: flex; gap: 8px; }
+  .setup-row input { flex: 1; min-width: 0; padding: 12px 14px; background: var(--bg-elev-2); border: 1px solid var(--line);
+    border-radius: 10px; color: var(--ink); font-family: inherit; font-size: 16px;
+    -webkit-user-select: text; user-select: text; }
+  .setup-row input:focus { outline: none; border-color: var(--gold); }
+  .setup-row button { padding: 12px 18px; background: var(--gold); color: var(--bg); border: none; border-radius: 10px;
+    font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 1px; cursor: pointer; }
 
   .tabs { display: flex; background: var(--bg-elev); border-radius: 12px; padding: 4px; margin: 16px 0 12px; border: 1px solid var(--line); }
   .tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; letter-spacing: 1px; color: var(--ink-dim);
@@ -164,7 +175,7 @@
 
 <header>
   <h1>Breath Trainer</h1>
-  <div class="subtitle">toward 2:00 by October 31</div>
+  <div class="subtitle" id="whoLine" title="Tap to rename">toward 2:00 by October 31</div>
 </header>
 
 <div class="tabs">
@@ -173,6 +184,15 @@
 </div>
 
 <div class="view active" id="view-train">
+  <div class="setup-card" id="setupCard" style="display:none">
+    <div class="setup-title">Whose training log is this?</div>
+    <div class="setup-sub">History stays on this device. Your name labels it so exports and imports can't mix people up.</div>
+    <div class="setup-row">
+      <input type="text" id="nameInput" placeholder="Your first name" maxlength="24" autocomplete="off" enterkeyhint="done">
+      <button id="nameSave">Save</button>
+    </div>
+  </div>
+
   <div class="suggestion" id="suggestion"></div>
 
   <div class="mode-picker" id="modePicker">
@@ -218,6 +238,7 @@
 <input type="file" id="importFile" accept=".json,application/json" style="display:none">
 
 <script>
+  const PROFILE_KEY = 'co2trainer_profile_v1';
   const CO2_REST_PATTERN = [105, 90, 75, 60, 45, 30, 20, 15];
   const O2_RAMP = [0.40, 0.46, 0.52, 0.58, 0.64, 0.70, 0.75, 0.80];
   const O2_REST = 120;
@@ -267,6 +288,9 @@
   }
   function clearSessions() { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} }
   function sessionMode(s) { return s.mode || 'co2'; }
+  function loadProfile() { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch(e) { return {}; } }
+  function saveProfile(p) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e) {} }
+  function profileName() { return (loadProfile().name || '').trim(); }
   function personalBest() {
     const holds = loadSessions().flatMap(s => s.holds || []);
     return holds.length ? Math.max(...holds) : null;
@@ -563,7 +587,7 @@
     else if (phase === 'prep') advance();
   });
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space') return;
+    if (e.code !== 'Space' || e.target.tagName === 'INPUT') return;
     e.preventDefault();
     if (phase === 'hold') release();
     else if (phase === 'idle' || phase === 'done') startBtn.click();
@@ -759,10 +783,12 @@
       if (confirm('Delete all session history? This cannot be undone.')) { clearSessions(); renderHistory(); }
     });
     $('exportBtn').addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(loadSessions(), null, 2)], {type: 'application/json'});
+      const name = profileName();
+      const payload = { app: 'breath-trainer', owner: name || null, exported: new Date().toISOString(), sessions: loadSessions() };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'breath-trainer-data.json';
+      a.download = 'breath-trainer-' + (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'data') + '.json';
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     });
@@ -775,8 +801,15 @@
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const incoming = JSON.parse(reader.result);
-        if (!Array.isArray(incoming)) throw new Error('bad format');
+        const parsed = JSON.parse(reader.result);
+        const incoming = Array.isArray(parsed) ? parsed
+          : (parsed && Array.isArray(parsed.sessions) ? parsed.sessions : null);
+        if (!incoming) throw new Error('bad format');
+        const owner = Array.isArray(parsed) ? null : (parsed.owner || null);
+        const me = profileName();
+        if (owner && me && owner.toLowerCase() !== me.toLowerCase()) {
+          if (!confirm(`This file is ${owner}'s log, but this device is ${me}'s. Mixing two people's histories is usually a mistake. Import anyway?`)) return;
+        }
         const existing = loadSessions();
         const seen = new Set(existing.map(s => s.date));
         const merged = existing.concat(incoming.filter(s => s && s.date && Array.isArray(s.holds) && !seen.has(s.date)));
@@ -790,10 +823,32 @@
     e.target.value = '';
   });
 
+  // ---------- profile (device-bound name) ----------
+  function renderProfile() {
+    const name = profileName();
+    $('whoLine').textContent = name ? `${name} · toward 2:00 by October 31` : 'toward 2:00 by October 31';
+    $('setupCard').style.display = name ? 'none' : 'block';
+  }
+  $('nameSave').addEventListener('click', () => {
+    const v = $('nameInput').value.trim();
+    if (!v) return;
+    saveProfile({ ...loadProfile(), name: v });
+    $('nameInput').blur();
+    renderProfile();
+  });
+  $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('nameSave').click(); });
+  $('whoLine').addEventListener('click', () => {
+    const v = prompt("Name for this device's training log:", profileName());
+    if (v === null) return;
+    saveProfile({ ...loadProfile(), name: v.trim() });
+    renderProfile();
+  });
+
   // ---------- init ----------
   buildPlan();
   updateUI();
   renderSuggestion();
+  renderProfile();
 </script>
 
 </body>
