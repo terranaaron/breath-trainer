@@ -13,7 +13,7 @@
   :root {
     --bg: #0f1720; --bg-elev: #182230; --bg-elev-2: #1f2b3c;
     --ink: #f2ede3; --ink-dim: #8a94a3; --ink-faint: #4a5568;
-    --hold: #e8846b; --rest: #7ecab1; --gold: #d4a574; --line: #263241;
+    --hold: #e8846b; --exhale: #8fb4d9; --rest: #7ecab1; --gold: #d4a574; --line: #263241;
   }
   html, body {
     background: var(--bg); color: var(--ink);
@@ -74,23 +74,27 @@
   .stage { background: var(--bg-elev); border-radius: 24px; padding: 28px 20px; margin-bottom: 14px;
     text-align: center; border: 1px solid var(--line); transition: border-color 0.4s; cursor: pointer; }
   .stage.is-hold { border-color: var(--hold); }
+  .stage.is-exhale { border-color: var(--exhale); }
   .stage.is-rest { border-color: var(--rest); }
   .stage.is-target-reached { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 
   .state-label { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 8px; transition: color 0.3s; }
   .stage.is-hold .state-label { color: var(--hold); }
+  .stage.is-exhale .state-label { color: var(--exhale); }
   .stage.is-rest .state-label { color: var(--rest); }
   .stage.is-target-reached .state-label { color: var(--gold); }
 
   .timer { font-family: "SF Mono", "Menlo", "Courier New", monospace; font-size: 76px; font-weight: 200;
     line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
+  .stage.is-exhale .timer { color: var(--exhale); }
   .target-note { font-size: 12px; color: var(--ink-dim); margin-top: 8px; letter-spacing: 1px; min-height: 15px; }
   .round-info { font-size: 13px; color: var(--ink-dim); margin-top: 10px; letter-spacing: 1px; }
 
   .action-btn { width: 100%; padding: 20px; background: var(--hold); color: var(--bg); border: none;
     border-radius: 14px; font-size: 16px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; font-family: inherit; margin-bottom: 12px; transition: transform 0.1s; }
+    cursor: pointer; font-family: inherit; margin-bottom: 12px; transition: transform 0.1s, background-color 0.3s; }
   .action-btn:active { transform: scale(0.98); }
+  .action-btn.exhaling { background: var(--exhale); }
   .action-btn.hidden { display: none; }
 
   .controls { display: flex; gap: 10px; margin-bottom: 16px; }
@@ -118,12 +122,13 @@
   .round-row.completed .hold-time { color: var(--ink-faint); }
   .hold-actual { color: var(--gold); font-weight: 500; font-size: 12px; margin-left: 6px; }
   .hold-actual.under { color: var(--ink-dim); }
+  .exhale-actual { color: var(--exhale); font-size: 11px; margin-left: 5px; }
   .rest-time { color: var(--ink-dim); font-size: 12px; }
 
   .safety { font-size: 11px; color: var(--ink-dim); text-align: center; padding: 10px 16px 20px; line-height: 1.6; }
   .safety strong { color: var(--hold); font-weight: 500; }
 
-  .goal-card { background: var(--bg-elev); border: 1px solid var(--gold); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .goal-card { background: var(--bg-elev); border: 1px solid var(--gold); border-radius: 16px; padding: 16px; margin-bottom: 12px; cursor: pointer; }
   .goal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   .goal-title { font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
   .goal-days { font-size: 11px; color: var(--ink-dim); }
@@ -132,6 +137,22 @@
   .goal-target { font-size: 12px; color: var(--ink-dim); text-align: right; line-height: 1.5; }
   .goal-bar { height: 6px; background: var(--bg-elev-2); border-radius: 3px; overflow: hidden; position: relative; }
   .goal-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.5s; }
+  .goal-edit-hint { font-size: 10px; color: var(--ink-faint); letter-spacing: 1px; text-transform: uppercase; text-align: center; margin-top: 10px; }
+
+  .goal-editor { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .goal-presets { display: flex; gap: 8px; margin-bottom: 10px; }
+  .goal-presets button { flex: 1; padding: 10px 4px; background: var(--bg-elev-2); color: var(--ink-dim);
+    border: 1px solid var(--line); border-radius: 10px; font-size: 13px; cursor: pointer; font-family: "SF Mono", monospace; }
+  .goal-presets button.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 600; }
+  .goal-custom { display: flex; gap: 8px; }
+  .goal-custom input { flex: 1; min-width: 0; padding: 11px 12px; background: var(--bg-elev-2); border: 1px solid var(--line);
+    border-radius: 10px; color: var(--ink); font-family: inherit; font-size: 15px;
+    -webkit-user-select: text; user-select: text; }
+  .goal-custom input:focus { outline: none; border-color: var(--gold); }
+  .goal-custom input[type="date"] { color-scheme: dark; }
+  .goal-custom button { padding: 11px 16px; background: var(--gold); color: var(--bg); border: none; border-radius: 10px;
+    font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 1px; cursor: pointer; }
+  .goal-editor .stat-label { margin-bottom: 10px; }
 
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
   .stat-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
@@ -154,7 +175,7 @@
   .chart-svg { width: 100%; height: 130px; display: block; }
 
   .session-list-title { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin: 8px 4px 10px; }
-  .session-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; }
+  .session-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; }
   .session-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
   .session-date { font-size: 13px; }
   .session-level { font-size: 11px; color: var(--ink-dim); letter-spacing: 1px; }
@@ -162,8 +183,16 @@
   .hold-pill { font-family: "SF Mono", monospace; font-size: 11px; padding: 3px 8px; background: var(--bg-elev-2);
     border-radius: 6px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
   .hold-pill.hit { color: var(--gold); background: rgba(212, 165, 116, 0.12); }
+  .session-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .session-card.expanded .session-detail { display: block; }
+  .detail-row { display: flex; justify-content: space-between; font-family: "SF Mono", monospace; font-size: 11px;
+    color: var(--ink-dim); padding: 3px 0; font-variant-numeric: tabular-nums; }
+  .detail-row .d-pure { color: var(--hold); }
+  .detail-row .d-ex { color: var(--exhale); }
+  .detail-row .d-total { color: var(--gold); }
+  .detail-legacy { font-size: 11px; color: var(--ink-faint); padding: 3px 0; }
 
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--ink-dim); font-size: 14px; line-height: 1.6; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--ink-dim); font-size: 14px; line-height: 1.6; }
   .data-btns { display: flex; gap: 8px; margin-top: 12px; }
   .data-btns button { flex: 1; padding: 12px; background: transparent; color: var(--ink-dim); border: 1px solid var(--line);
     border-radius: 12px; font-size: 12px; letter-spacing: 1px; cursor: pointer; font-family: inherit; }
@@ -175,7 +204,7 @@
 
 <header>
   <h1>Breath Trainer</h1>
-  <div class="subtitle" id="whoLine" title="Tap to rename">toward 2:00 by October 31</div>
+  <div class="subtitle" id="whoLine" title="Tap to rename">toward 2:00</div>
 </header>
 
 <div class="tabs">
@@ -201,11 +230,7 @@
     <button data-mode="max">Max Test<small>one all-out hold</small></button>
   </div>
 
-  <div class="level-picker" id="levelPicker">
-    <button data-hold="45" class="active">Beginner<br>45s</button>
-    <button data-hold="60">Standard<br>60s</button>
-    <button data-hold="75">Advanced<br>75s</button>
-  </div>
+  <div class="level-picker" id="levelPicker"></div>
   <div class="mode-note" id="modeNote"></div>
 
   <div class="stage" id="stage">
@@ -215,7 +240,7 @@
     <div class="round-info" id="roundInfo">Tap Start when you're ready</div>
   </div>
 
-  <button class="action-btn hidden" id="releaseBtn">Release</button>
+  <button class="action-btn hidden" id="releaseBtn">Begin exhale</button>
 
   <div class="controls">
     <button id="startBtn" class="primary">Start</button>
@@ -243,20 +268,28 @@
   const O2_RAMP = [0.40, 0.46, 0.52, 0.58, 0.64, 0.70, 0.75, 0.80];
   const O2_REST = 120;
   const STORAGE_KEY = 'co2trainer_sessions_v1';
-  const GOAL_DATE = new Date(2026, 9, 31, 23, 59, 59); // Oct 31 2026
-  const GOAL_SEC = 120, STRETCH_SEC = 180;
+  const DEFAULT_GOAL_SEC = 120;
+  const DEFAULT_GOAL_DATE = '2026-10-31';
+  const GOAL_PRESETS = [90, 120, 150, 180];
   const WEEKLY_TARGET = 5;
+  const CO2_TIERS = [ ['Beginner', 0.40, 45], ['Standard', 0.55, 60], ['Advanced', 0.70, 75] ];
+  const CO2_FLOOR = 20, CO2_CAP = 90;
+  const TAP_DEBOUNCE_MS = 400;
 
   let mode = 'co2';
-  let holdDuration = 45;        // co2 level
-  let plan = [];                // [{target, rest, done, actual}]
+  let co2Tier = 0;
+  let plan = [];                // [{target, rest, done, actual: {total,pure,exhale}|null}]
   let currentRound = 0;
-  let phase = 'idle';           // idle | prep | hold | rest | done
-  let phaseStart = 0;           // ms timestamp of phase start
-  let phaseDuration = 0;        // seconds, for prep/rest countdowns
+  let phase = 'idle';           // idle | prep | hold | exhale | rest | done
+  let phaseStart = 0;           // ms timestamp, prep/rest countdowns
+  let phaseDuration = 0;        // seconds, prep/rest countdowns
+  let holdStartTs = null;       // t0 — hold begins
+  let exhaleStartTs = null;     // t1 — exhale begins (tap 1)
+  let purePending = 0;          // frozen pure-hold seconds after tap 1
+  let lastPhaseTapTs = 0;
   let pausedAt = null;
   let ticker = null;
-  let holdActuals = [];
+  let holdActuals = [];         // [{total, pure, exhale}]
   let targetBeeped = false;
   let pbBeeped = false;
   let lastMilestone = 0;
@@ -291,9 +324,20 @@
   function loadProfile() { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch(e) { return {}; } }
   function saveProfile(p) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e) {} }
   function profileName() { return (loadProfile().name || '').trim(); }
+  function getGoal() {
+    const p = loadProfile();
+    return { sec: p.goalSec || DEFAULT_GOAL_SEC, date: p.goalDate || DEFAULT_GOAL_DATE };
+  }
+
+  // Holds were stored as bare integers before the two-tap update; new records are
+  // {total, pure, exhale}. Every read goes through these — never index holds raw.
+  function holdTotal(h) { return typeof h === 'number' ? h : h.total; }
+  function holdPure(h) { return typeof h === 'number' ? h : (h.pure != null ? h.pure : h.total); }
+  function holdExhale(h) { return typeof h === 'number' ? null : h.exhale; }
+
   function personalBest() {
-    const holds = loadSessions().flatMap(s => s.holds || []);
-    return holds.length ? Math.max(...holds) : null;
+    const totals = loadSessions().flatMap(s => (s.holds || []).map(holdTotal));
+    return totals.length ? Math.max(...totals) : null;
   }
 
   // ---------- helpers ----------
@@ -318,7 +362,7 @@
       osc.start(); osc.stop(audioCtx.currentTime + duration);
     } catch(e) {}
   }
-  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e) {} }
+  function buzz(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {} }
 
   async function requestWakeLock() {
     try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
@@ -329,9 +373,19 @@
   });
 
   // ---------- plan ----------
+  function co2Levels() {
+    const pb = personalBest();
+    return CO2_TIERS.map(([name, pct, fallback]) => ({
+      name,
+      secs: pb ? Math.min(CO2_CAP, Math.max(CO2_FLOOR, Math.round(pb * pct / 5) * 5)) : fallback
+    }));
+  }
+  function currentCo2Hold() { return co2Levels()[co2Tier].secs; }
+
   function buildPlan() {
     if (mode === 'co2') {
-      plan = CO2_REST_PATTERN.map(rest => ({ target: holdDuration, rest, done: false, actual: null }));
+      const hold = currentCo2Hold();
+      plan = CO2_REST_PATTERN.map(rest => ({ target: hold, rest, done: false, actual: null }));
     } else if (mode === 'o2') {
       const pb = personalBest() || 60;
       plan = O2_RAMP.map(p => ({
@@ -341,22 +395,37 @@
     } else {
       plan = [{ target: null, rest: 0, done: false, actual: null }];
     }
+    renderLevelPicker();
     renderRounds();
     renderModeNote();
+  }
+
+  function renderLevelPicker() {
+    if (mode !== 'co2') { levelPicker.style.display = 'none'; return; }
+    levelPicker.style.display = 'flex';
+    levelPicker.innerHTML = co2Levels().map((l, i) =>
+      `<button data-tier="${i}" class="${i === co2Tier ? 'active' : ''}">${l.name}<br>${fmtShort(l.secs)}</button>`
+    ).join('');
   }
 
   function renderModeNote() {
     const pb = personalBest();
     if (mode === 'co2') {
-      levelPicker.style.display = 'flex';
-      modeNote.textContent = pb ? `Tip: pick a hold near half your best (${fmtShort(Math.round(pb/2))})` : 'New? Start with Beginner.';
+      modeNote.textContent = pb
+        ? `Levels scale with your best (${fmtShort(pb)}), capped at ${fmtShort(CO2_CAP)}`
+        : 'New? Start with Beginner.';
     } else if (mode === 'o2') {
-      levelPicker.style.display = 'none';
       modeNote.textContent = pb ? `Targets scale from your best: ${fmtShort(pb)}` : 'No best yet — using a starter table. Do a Max Test soon.';
     } else {
-      levelPicker.style.display = 'none';
       modeNote.textContent = pb ? `Your best: ${fmtShort(pb)} — beat it.` : 'First max test sets your baseline. 2 min of calm breathing, then one relaxed all-out hold.';
     }
+  }
+
+  function actualHtml(r) {
+    if (r.actual == null) return '';
+    const under = r.target != null && r.actual.pure < r.target;
+    return `<span class="hold-actual ${under ? 'under' : ''}">${r.actual.pure}s hold</span>`
+         + `<span class="exhale-actual">+${r.actual.exhale}s ex</span>`;
   }
 
   function renderRounds() {
@@ -366,69 +435,63 @@
           <div class="round-dot ${plan[0] && plan[0].done ? 'checked' : ''}"></div>
           <div class="round-num">01</div>
           <div class="round-detail">
-            <span><span class="hold-time">Max hold</span>${plan[0] && plan[0].actual != null ? `<span class="hold-actual">${fmtShort(plan[0].actual)}</span>` : ''}</span>
+            <span><span class="hold-time">Max hold</span>${plan[0] && plan[0].actual != null ? `<span class="hold-actual">${fmtShort(plan[0].actual.total)} total</span>` : ''}</span>
             <span class="rest-time">after 2:00 calm breathing</span>
           </div>
         </div>`;
       return;
     }
-    roundsEl.innerHTML = plan.map((r, i) => {
-      const actualHtml = r.actual != null
-        ? `<span class="hold-actual ${r.actual < r.target ? 'under' : ''}">${r.actual}s actual</span>`
-        : '';
-      return `
-        <div class="round-row ${i === currentRound && (phase === 'hold' || phase === 'rest') ? 'active' : ''} ${r.done ? 'completed' : ''}">
+    roundsEl.innerHTML = plan.map((r, i) => `
+        <div class="round-row ${i === currentRound && (phase === 'hold' || phase === 'exhale' || phase === 'rest') ? 'active' : ''} ${r.done ? 'completed' : ''}">
           <div class="round-dot ${r.done ? 'checked' : ''}"></div>
           <div class="round-num">${String(i+1).padStart(2,'0')}</div>
           <div class="round-detail">
-            <span><span class="hold-time">Hold ${r.target}s</span>${actualHtml}</span>
+            <span><span class="hold-time">Hold ${r.target}s</span>${actualHtml(r)}</span>
             <span class="rest-time">${i === plan.length - 1 ? 'final' : 'rest ' + r.rest + 's'}</span>
           </div>
         </div>
-      `;
-    }).join('');
+      `).join('');
   }
 
-  // ---------- suggestion (what should today be?) ----------
+  // ---------- suggestion ----------
   function todaysSuggestion() {
     const sessions = loadSessions();
-    if (!sessions.length) return { mode: 'max', text: 'Start with a <span class="chip">Max Test</span> to set your baseline' };
+    if (!sessions.length) return { text: 'Start with a <span class="chip">Max Test</span> to set your baseline' };
     const todayKey = new Date().toDateString();
     if (sessions.some(s => new Date(s.date).toDateString() === todayKey))
-      return { mode: null, text: 'Trained today ✓ — recovery is part of the program' };
+      return { text: 'Trained today ✓ — recovery is part of the program' };
     const now = Date.now();
     const lastMax = sessions.find(s => sessionMode(s) === 'max');
     if (!lastMax || now - new Date(lastMax.date).getTime() > 7 * 86400000)
-      return { mode: 'max', text: 'Weekly check-in: <span class="chip">Max Test</span>' };
+      return { text: 'Weekly check-in: <span class="chip">Max Test</span>' };
     const lastTable = sessions.find(s => sessionMode(s) !== 'max');
     if (lastTable && sessionMode(lastTable) === 'co2')
-      return { mode: 'o2', text: 'Today: <span class="chip">O₂ Table</span> (you did CO₂ last)' };
-    return { mode: 'co2', text: 'Today: <span class="chip">CO₂ Table</span>' };
+      return { text: 'Today: <span class="chip">O₂ Table</span> (you did CO₂ last)' };
+    return { text: 'Today: <span class="chip">CO₂ Table</span>' };
   }
-  function renderSuggestion() {
-    const s = todaysSuggestion();
-    suggestionEl.innerHTML = s.text;
-  }
+  function renderSuggestion() { suggestionEl.innerHTML = todaysSuggestion().text; }
 
   // ---------- timing (timestamp-based; survives throttling) ----------
-  function elapsedSec() { return (Date.now() - phaseStart) / 1000; }
-  function remainingSec() { return phaseDuration - elapsedSec(); }
+  function totalElapsed() { return (Date.now() - holdStartTs) / 1000; }
+  function remainingSec() { return phaseDuration - (Date.now() - phaseStart) / 1000; }
   function startTicker() { clearInterval(ticker); ticker = setInterval(tick, 200); }
   function stopTicker() { clearInterval(ticker); ticker = null; }
 
   function tick() {
     if (phase === 'hold') {
-      const t = Math.floor(elapsedSec());
+      const t = Math.floor(totalElapsed());   // pure hold elapsed (exhale not begun)
       const target = plan[currentRound].target;
       if (target != null && !targetBeeped && t >= target) {
         targetBeeped = true; beep(880, 0.4, 0.35); buzz(200);
       }
       if (mode === 'max') {
-        const pb = personalBest();
-        if (pb && !pbBeeped && t > pb) { pbBeeped = true; beep(1046, 0.5, 0.4); buzz([100,80,100]); }
+        checkPbCrossing(t);
         const ms = Math.floor(t / 30);
-        if (ms > lastMilestone) { lastMilestone = ms; if (!pbBeeped || t % 30 === 0) beep(587, 0.12, 0.18); }
+        if (ms > lastMilestone) { lastMilestone = ms; beep(587, 0.12, 0.18); }
       }
+      updateUI();
+    } else if (phase === 'exhale') {
+      if (mode === 'max') checkPbCrossing(Math.floor(totalElapsed()));  // total still climbing
       updateUI();
     } else if (phase === 'rest' || phase === 'prep') {
       const rem = Math.ceil(remainingSec());
@@ -436,6 +499,11 @@
       if (rem <= 0) { advance(); return; }
       updateUI();
     }
+  }
+
+  function checkPbCrossing(t) {
+    const pb = personalBest();
+    if (pb && !pbBeeped && t > pb) { pbBeeped = true; beep(1046, 0.5, 0.4); buzz([100, 80, 100]); }
   }
 
   function advance() {
@@ -446,21 +514,37 @@
 
   function startHold() {
     phase = 'hold';
-    phaseStart = Date.now();
+    holdStartTs = Date.now();
+    exhaleStartTs = null;
+    purePending = 0;
     targetBeeped = false; pbBeeped = false; lastMilestone = 0;
     beep(523, 0.3, 0.4); buzz(120);
     renderRounds(); updateUI();
     startTicker();
   }
 
-  function release() {
+  function beginExhale() {
     if (phase !== 'hold') return;
+    exhaleStartTs = Date.now();
+    purePending = Math.floor((exhaleStartTs - holdStartTs) / 1000);
+    lastPhaseTapTs = exhaleStartTs;
+    phase = 'exhale';
+    beep(392, 0.25, 0.35); buzz(120);            // tap 1: single low tone + single buzz
+    updateUI();
+  }
+
+  function completeExhale() {
+    if (phase !== 'exhale') return;
+    if (Date.now() - lastPhaseTapTs < TAP_DEBOUNCE_MS) return;  // fat-finger guard
     stopTicker();
-    const actual = Math.floor(elapsedSec());
-    plan[currentRound].actual = actual;
+    const total = Math.floor(totalElapsed());
+    const rec = { total, pure: purePending, exhale: total - purePending };
+    plan[currentRound].actual = rec;
     plan[currentRound].done = true;
-    holdActuals.push(actual);
-    beep(784, 0.3, 0.4);
+    holdActuals.push(rec);
+    holdStartTs = null; exhaleStartTs = null;
+    beep(784, 0.2, 0.4); setTimeout(() => beep(988, 0.25, 0.35), 130);  // tap 2: resolving pair
+    buzz([80, 60, 80]);
 
     if (currentRound >= plan.length - 1) { finish(); return; }
     phase = 'rest';
@@ -473,20 +557,22 @@
 
   function finish() {
     phase = 'done';
-    const pb = personalBest();
-    const newBest = pb == null || Math.max(...holdActuals) > pb;
+    const prevBest = personalBest();
+    const bestTotal = Math.max(...holdActuals.map(h => h.total));
+    const newBest = prevBest == null || bestTotal > prevBest;
     beep(1046, 0.4, 0.4);
     setTimeout(() => beep(1318, 0.5, 0.4), 200);
     saveSession({
       date: new Date().toISOString(),
       mode,
-      level: mode === 'co2' ? holdDuration : null,
+      level: mode === 'co2' ? currentCo2Hold() : null,
       targets: plan.map(r => r.target),
       holds: holdActuals.slice()
     });
     releaseWakeLock();
     startBtn.textContent = 'Start';
-    renderRounds(); updateUI(); renderSuggestion();
+    buildPlan();  // PB may have moved — refresh scaled levels/targets
+    updateUI(); renderSuggestion(); renderProfile();
     if (newBest && mode === 'max') {
       stateLabel.textContent = 'New personal best';
       stage.classList.add('is-target-reached');
@@ -510,12 +596,13 @@
 
   // ---------- UI ----------
   function updateUI() {
-    stage.classList.remove('is-hold', 'is-rest', 'is-target-reached');
+    stage.classList.remove('is-hold', 'is-exhale', 'is-rest', 'is-target-reached');
     releaseBtn.classList.add('hidden');
+    releaseBtn.classList.remove('exhaling');
     targetNote.textContent = '';
 
     if (phase === 'hold') {
-      const t = Math.floor(elapsedSec());
+      const t = Math.floor(totalElapsed());
       const target = plan[currentRound].target;
       stage.classList.add('is-hold');
       if (target != null && t >= target) stage.classList.add('is-target-reached');
@@ -523,14 +610,24 @@
         const pb = personalBest();
         if (pb && t > pb) stage.classList.add('is-target-reached');
         stateLabel.textContent = (pb && t > pb) ? 'New best — keep going' : 'Hold';
-        targetNote.textContent = pb ? `best ${fmtShort(pb)} · goal ${fmtShort(GOAL_SEC)}` : `goal ${fmtShort(GOAL_SEC)}`;
+        targetNote.textContent = pb ? `best ${fmtShort(pb)} · goal ${fmtShort(getGoal().sec)}` : `goal ${fmtShort(getGoal().sec)}`;
       } else {
-        stateLabel.textContent = (t >= target) ? 'Target reached — release when ready' : 'Hold';
-        targetNote.textContent = `target ${target}s`;
+        stateLabel.textContent = (t >= target) ? 'Target reached — exhale when ready' : 'Hold';
+        targetNote.textContent = `target ${target}s pure hold`;
       }
       timerEl.textContent = fmt(t);
-      roundInfoEl.textContent = mode === 'max' ? 'Tap anywhere to release' : `Round ${currentRound + 1} of ${plan.length} · tap to release`;
+      roundInfoEl.textContent = mode === 'max' ? 'Tap anywhere to begin exhale' : `Round ${currentRound + 1} of ${plan.length} · tap to begin exhale`;
+      releaseBtn.textContent = 'Begin exhale';
       releaseBtn.classList.remove('hidden');
+    } else if (phase === 'exhale') {
+      stage.classList.add('is-exhale');
+      stateLabel.textContent = 'Exhale — tap when complete';
+      timerEl.textContent = fmt(Math.floor(totalElapsed()));
+      targetNote.textContent = `pure hold ${fmtShort(purePending)} — still counting`;
+      roundInfoEl.textContent = 'Tap anywhere when your exhale is done';
+      releaseBtn.textContent = 'Exhale complete';
+      releaseBtn.classList.remove('hidden');
+      releaseBtn.classList.add('exhaling');
     } else if (phase === 'rest') {
       stage.classList.add('is-rest');
       stateLabel.textContent = 'Breathe';
@@ -545,7 +642,7 @@
     } else if (phase === 'done') {
       stateLabel.textContent = 'Complete';
       timerEl.textContent = '✓';
-      roundInfoEl.textContent = holdActuals.length ? `Best this session: ${fmtShort(Math.max(...holdActuals))} · logged` : 'Session logged';
+      roundInfoEl.textContent = holdActuals.length ? `Best this session: ${fmtShort(Math.max(...holdActuals.map(h => h.total)))} total · logged` : 'Session logged';
     } else {
       stateLabel.textContent = 'Ready';
       timerEl.textContent = '00:00';
@@ -563,7 +660,10 @@
       stopTicker();
       startBtn.textContent = 'Resume';
     } else {
-      phaseStart += Date.now() - pausedAt;
+      const delta = Date.now() - pausedAt;
+      phaseStart += delta;
+      if (holdStartTs != null) holdStartTs += delta;
+      if (exhaleStartTs != null) exhaleStartTs += delta;
       pausedAt = null;
       startTicker();
       startBtn.textContent = 'Pause';
@@ -574,22 +674,25 @@
     stopTicker();
     phase = 'idle';
     currentRound = 0; holdActuals = []; pausedAt = null;
+    holdStartTs = null; exhaleStartTs = null; purePending = 0;
     buildPlan();
     releaseWakeLock();
     startBtn.textContent = 'Start';
     updateUI();
   });
 
-  releaseBtn.addEventListener('click', release);
-  stage.addEventListener('click', () => {
+  function stageTap() {
     if (pausedAt) return;
-    if (phase === 'hold') release();
+    if (phase === 'hold') beginExhale();
+    else if (phase === 'exhale') completeExhale();
     else if (phase === 'prep') advance();
-  });
+  }
+  releaseBtn.addEventListener('click', stageTap);
+  stage.addEventListener('click', stageTap);
   document.addEventListener('keydown', e => {
     if (e.code !== 'Space' || e.target.tagName === 'INPUT') return;
     e.preventDefault();
-    if (phase === 'hold') release();
+    if (phase === 'hold' || phase === 'exhale') stageTap();
     else if (phase === 'idle' || phase === 'done') startBtn.click();
   });
 
@@ -607,9 +710,7 @@
   levelPicker.addEventListener('click', e => {
     const btn = e.target.closest('button');
     if (!btn || (phase !== 'idle' && phase !== 'done')) return;
-    levelPicker.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    holdDuration = +btn.dataset.hold;
+    co2Tier = +btn.dataset.tier;
     buildPlan();
   });
 
@@ -634,7 +735,6 @@
     if (isSameDay(d, yesterday)) return `Yesterday · ${time}`;
     return d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' · ' + time;
   }
-  const MODE_LABEL = { co2: 'CO₂', o2: 'O₂', max: 'MAX' };
 
   function weekMonday(d) {
     const dt = new Date(d);
@@ -666,23 +766,23 @@
   }
 
   function renderChart(sessions) {
-    const data = sessions.slice(0, 30).reverse().map(s => Math.max(...s.holds));
+    const goalSec = getGoal().sec;
+    const data = sessions.slice(0, 30).reverse().map(s => Math.max(...s.holds.map(holdTotal)));
     if (data.length < 2) return '';
     const w = 320, h = 110, pad = 10;
-    const max = Math.max(...data, GOAL_SEC + 15);
-    const min = 0;
-    const range = Math.max(max - min, 10);
-    const yOf = v => h - pad - ((v - min) / range) * (h - pad*2);
+    const max = Math.max(...data, goalSec + 15);
+    const range = Math.max(max, 10);
+    const yOf = v => h - pad - (v / range) * (h - pad*2);
     const stepX = (w - pad*2) / (data.length - 1);
     const pts = data.map((v, i) => [pad + i * stepX, yOf(v)]);
     const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
     const area = path + ` L ${pts[pts.length-1][0]},${h} L ${pts[0][0]},${h} Z`;
     const dots = pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="#d4a574"/>`).join('');
-    const gy = yOf(GOAL_SEC).toFixed(1);
+    const gy = yOf(goalSec).toFixed(1);
     return `
       <svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
         <line x1="${pad}" y1="${gy}" x2="${w-pad}" y2="${gy}" stroke="#7ecab1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
-        <text x="${w-pad}" y="${gy - 4}" text-anchor="end" font-size="9" fill="#7ecab1" opacity="0.8">2:00 goal</text>
+        <text x="${w-pad}" y="${gy - 4}" text-anchor="end" font-size="9" fill="#7ecab1" opacity="0.8">${fmtShort(goalSec)} goal</text>
         <path d="${area}" fill="#d4a574" fill-opacity="0.1"/>
         <path d="${path}" stroke="#d4a574" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
         ${dots}
@@ -694,32 +794,105 @@
     `;
   }
 
+  const MODE_LABEL = { co2: 'CO₂', o2: 'O₂', max: 'MAX' };
+
+  function goalCardHtml() {
+    const g = getGoal();
+    const pb = personalBest();
+    const end = new Date(g.date + 'T23:59:59');
+    const daysLeft = Math.max(0, Math.ceil((end - Date.now()) / 86400000));
+    const pct = pb ? Math.min(100, Math.round((pb / g.sec) * 100)) : 0;
+    const dateLabel = end.toLocaleDateString([], {month: 'short', day: 'numeric'});
+    return `
+      <div class="goal-card" id="goalCard">
+        <div class="goal-head">
+          <div class="goal-title">Goal · ${fmtShort(g.sec)} hold</div>
+          <div class="goal-days">${daysLeft} days left · ${dateLabel}</div>
+        </div>
+        <div class="goal-numbers">
+          <div class="goal-pb">${pb ? fmtShort(pb) : '—'}</div>
+          <div class="goal-target">${pb == null ? 'no best yet' : pct >= 100 ? 'goal reached — raise it 🎉' : pct + '% of ' + fmtShort(g.sec)}</div>
+        </div>
+        <div class="goal-bar"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
+        <div class="goal-edit-hint">tap to edit goal</div>
+      </div>
+      <div class="goal-editor" id="goalEditor" style="display:none">
+        <div class="stat-label">Target hold</div>
+        <div class="goal-presets">
+          ${GOAL_PRESETS.map(s => `<button data-goal="${s}" class="${s === g.sec ? 'active' : ''}">${fmtShort(s)}</button>`).join('')}
+        </div>
+        <div class="goal-custom">
+          <input type="text" id="goalCustom" placeholder="custom m:ss" inputmode="numeric" value="${GOAL_PRESETS.includes(g.sec) ? '' : fmtShort(g.sec)}">
+          <input type="date" id="goalDate" value="${g.date}">
+          <button id="goalSave">Save</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function parseGoalTime(str) {
+    str = (str || '').trim();
+    if (!str) return null;
+    let sec = null;
+    if (/^\d+$/.test(str)) sec = parseInt(str, 10);
+    else {
+      const m = str.match(/^(\d+):([0-5]\d)$/);
+      if (m) sec = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    }
+    return (sec != null && sec >= 30 && sec <= 600) ? sec : null;
+  }
+
+  function wireGoalEditor(rerender) {
+    $('goalCard').addEventListener('click', () => {
+      const ed = $('goalEditor');
+      ed.style.display = ed.style.display === 'none' ? 'block' : 'none';
+    });
+    $('goalEditor').addEventListener('click', e => e.stopPropagation());
+    document.querySelectorAll('#goalEditor [data-goal]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        saveProfile({ ...loadProfile(), goalSec: +btn.dataset.goal, goalDate: $('goalDate').value || getGoal().date });
+        renderProfile(); rerender();
+      });
+    });
+    $('goalSave').addEventListener('click', () => {
+      const custom = parseGoalTime($('goalCustom').value);
+      const p = { ...loadProfile(), goalDate: $('goalDate').value || getGoal().date };
+      if ($('goalCustom').value.trim() && custom == null) { alert('Enter a time like 2:30 (between 0:30 and 10:00).'); return; }
+      if (custom != null) p.goalSec = custom;
+      saveProfile(p);
+      renderProfile(); rerender();
+    });
+  }
+
+  function detailRows(s) {
+    return (s.holds || []).map((h, i) => {
+      if (typeof h === 'number')
+        return `<div class="detail-legacy">${String(i+1).padStart(2,'0')} · ${h}s (single-tap record — no exhale breakdown)</div>`;
+      return `<div class="detail-row">
+        <span>${String(i+1).padStart(2,'0')}</span>
+        <span class="d-pure">${h.pure}s hold</span>
+        <span class="d-ex">+${h.exhale}s exhale</span>
+        <span class="d-total">${fmtShort(h.total)} total</span>
+      </div>`;
+    }).join('');
+  }
+
   function renderHistory() {
     const sessions = loadSessions();
     const container = $('historyContent');
+
     if (sessions.length === 0) {
-      container.innerHTML = `<div class="empty-state">No sessions yet.<br>Start with a Max Test to set your baseline.</div>`;
+      container.innerHTML = goalCardHtml() + `<div class="empty-state">No sessions yet.<br>Start with a Max Test to set your baseline.</div>`;
+      wireGoalEditor(renderHistory);
       return;
     }
-    const pb = personalBest();
-    const daysLeft = Math.max(0, Math.ceil((GOAL_DATE - Date.now()) / 86400000));
-    const pct = Math.min(100, Math.round((pb / GOAL_SEC) * 100));
+
     const cons = consistencyStats(sessions);
-    const recentHolds = sessions.slice(0, 5).flatMap(s => s.holds);
-    const avg = Math.round(recentHolds.reduce((a,b) => a+b, 0) / recentHolds.length);
+    const recentTotals = sessions.slice(0, 5).flatMap(s => s.holds.map(holdTotal));
+    const avg = Math.round(recentTotals.reduce((a,b) => a+b, 0) / recentTotals.length);
 
     container.innerHTML = `
-      <div class="goal-card">
-        <div class="goal-head">
-          <div class="goal-title">Goal · 2:00 hold</div>
-          <div class="goal-days">${daysLeft} days left</div>
-        </div>
-        <div class="goal-numbers">
-          <div class="goal-pb">${fmtShort(pb)}</div>
-          <div class="goal-target">${pct}% of 2:00${pb >= GOAL_SEC ? ` · stretch: ${fmtShort(STRETCH_SEC)}` : ''}</div>
-        </div>
-        <div class="goal-bar"><div class="goal-bar-fill" style="width:${pb >= GOAL_SEC ? Math.min(100, Math.round(pb/STRETCH_SEC*100)) : pct}%"></div></div>
-      </div>
+      ${goalCardHtml()}
 
       <div class="stat-grid">
         <div class="stat-card">
@@ -746,29 +919,31 @@
       </div>
 
       <div class="chart-card">
-        <div class="chart-title">Best hold per session</div>
+        <div class="chart-title">Best total hold per session</div>
         ${renderChart(sessions) || '<div style="font-size:12px;color:var(--ink-dim);padding:12px 0">Complete a second session to see progress.</div>'}
       </div>
 
-      <div class="session-list-title">Recent sessions</div>
-      ${sessions.slice(0, 20).map(s => {
-        const best = Math.max(...s.holds);
+      <div class="session-list-title">Recent sessions · tap for breakdown</div>
+      ${sessions.slice(0, 20).map((s, idx) => {
+        const best = Math.max(...s.holds.map(holdTotal));
         const m = sessionMode(s);
         const desc = m === 'max' ? `max test · ${fmtShort(best)}`
           : m === 'o2' ? `O₂ table · best ${fmtShort(best)}`
           : `CO₂ ${s.level || ''}s · best ${fmtShort(best)}`;
         return `
-          <div class="session-card">
+          <div class="session-card" data-session="${idx}">
             <div class="session-head">
               <div class="session-date">${formatDate(s.date)}</div>
               <div class="session-level">${desc}</div>
             </div>
             <div class="session-holds">
-              ${s.holds.map((h2, i) => {
+              ${s.holds.map((h, i) => {
                 const tgt = s.targets ? s.targets[i] : s.level;
-                return `<span class="hold-pill ${tgt != null && h2 >= tgt ? 'hit' : (m === 'max' ? 'hit' : '')}">${h2}s</span>`;
+                const hit = m === 'max' || (tgt != null && holdPure(h) >= tgt);
+                return `<span class="hold-pill ${hit ? 'hit' : ''}">${holdTotal(h)}s</span>`;
               }).join('')}
             </div>
+            <div class="session-detail">${detailRows(s)}</div>
           </div>
         `;
       }).join('')}
@@ -778,6 +953,11 @@
         <button id="clearBtn">Clear all</button>
       </div>
     `;
+
+    wireGoalEditor(renderHistory);
+    container.querySelectorAll('[data-session]').forEach(card => {
+      card.addEventListener('click', () => card.classList.toggle('expanded'));
+    });
 
     $('clearBtn').addEventListener('click', () => {
       if (confirm('Delete all session history? This cannot be undone.')) { clearSessions(); renderHistory(); }
@@ -823,10 +1003,12 @@
     e.target.value = '';
   });
 
-  // ---------- profile (device-bound name) ----------
+  // ---------- profile (device-bound name + goal) ----------
   function renderProfile() {
     const name = profileName();
-    $('whoLine').textContent = name ? `${name} · toward 2:00 by October 31` : 'toward 2:00 by October 31';
+    const g = getGoal();
+    const dateLabel = new Date(g.date + 'T12:00:00').toLocaleDateString([], {month: 'short', day: 'numeric'});
+    $('whoLine').textContent = `${name ? name + ' · ' : ''}toward ${fmtShort(g.sec)} by ${dateLabel}`;
     $('setupCard').style.display = name ? 'none' : 'block';
   }
   $('nameSave').addEventListener('click', () => {

@@ -1,7 +1,8 @@
 # Breath Trainer
 
-A breath-hold training app for one goal: **a 2:00 hold (stretch: 3:00) by October 31**.
-Runs entirely in the browser — no accounts, no server, your data stays on your device.
+A breath-hold training app with a **user-set goal** (default 2:00, selectable up to
+3:00+ with a target date). Runs entirely in the browser — no accounts, no server,
+your data stays on your device.
 
 **Live:** https://terranaaron.github.io/breath-trainer/
 
@@ -30,11 +31,31 @@ The app suggests which session to do today, tracks weekly consistency
 3. It opens full-screen like a real app. Keep the sound on — the beeps let you
    train with your eyes closed.
 
-## During a session
+## During a session — the two-tap hold
 
-- **Tap anywhere on the big timer card** to release a hold (or use the Release button)
-- Beep at target · milestone beeps every 30s on max tests · triple-beep when a rest ends
+A hold is measured through the **completed exhale**, with two taps:
+
+1. **Tap 1 — "Begin exhale"**: freezes your *pure hold* time; the timer keeps
+   counting (in blue) through the exhale
+2. **Tap 2 — "Exhale complete"**: stops the clock — that's your *total*, the
+   headline number used for your best, the chart, and goal progress
+
+Table targets are measured against **pure hold** (the effort); the exhale is on top.
+Each rep records all three: pure hold, exhale length, and total. The second tap is
+required — the clock runs until you tap.
+
+- **Tap anywhere on the big timer card** for both taps (or use the button)
+- Beep + buzz at target · low tone on tap 1, resolving pair on tap 2 ·
+  milestone beeps every 30s on max tests · PB-crossing chime
 - The screen stays awake during a session (Wake Lock)
+
+## Your goal
+
+Tap the goal card on the **Progress** tab to set your target hold (presets 1:30–3:00
+or custom) and target date. The header, progress bar, days-left countdown, and the
+chart's goal line all follow it. CO₂ table levels scale with your personal best
+(40/55/70%, capped at 90s — long holds are trained in O₂ tables and max tests,
+not brutal fixed CO₂ tables).
 
 ## Sharing it with other people
 
