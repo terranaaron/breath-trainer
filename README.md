@@ -1,8 +1,9 @@
 # Breath Trainer
 
-A breath-hold training app with a **user-set goal** (default 2:00, selectable up to
-3:00+ with a target date). Runs entirely in the browser — no accounts, no server,
-your data stays on your device.
+A dry breath-hold training app built around **freediving practice**: the goal is a
+long *comfortable* hold — how far you get before the first contraction — not just a
+white-knuckle max. Runs entirely in the browser — no accounts, no server, your data
+stays on your device.
 
 **Live:** https://terranaaron.github.io/breath-trainer/
 
@@ -17,12 +18,15 @@ printable version). It opens the live app — then use Share → **Add to Home S
 
 | Mode | What it is | When |
 |---|---|---|
-| **CO₂ Table** | 8 holds at a fixed length, rest shrinks each round (105s → 15s). Trains tolerance to CO₂ build-up — the "urge to breathe" is CO₂, not lack of oxygen. | 2–3× / week |
-| **O₂ Table** | 8 holds that grow each round (40% → 80% of your best), rest fixed at 2:00. Trains comfort with longer holds. Targets auto-scale from your personal best. | 2–3× / week (alternate with CO₂ days) |
-| **Max Test** | 2:00 of calm breathing, then one relaxed all-out hold. Sets/updates your baseline and shows real progress. | 1× / week |
+| **Comfort Table** | 8 holds, each ending at the **first hint of a contraction** — never past it. Fixed 2:00 rest. No numeric targets: your body sets them, so it auto-adjusts to good and bad days. Progression rule: a full contraction-free week earns +15–20s. | Default day (2–3× / week) |
+| **CO₂ Table** | 8 holds at a fixed length, rest shrinks each round (105s → 15s). The deliberate hard day — builds tolerance to CO₂ build-up. Levels scale with your best (40/55/70%, capped at 2:00). | 1× / week |
+| **O₂ Table** | 8 holds that grow each round (40% → 85% of your best), rest fixed at 2:00. Walks you deeper into the hold. | 1× / week |
+| **Max Test** | 2:00 of calm breathing, then one relaxed all-out hold. Sets/updates your baseline. | 1× / week |
 
-The app suggests which session to do today, tracks weekly consistency
-(target: 5 sessions/week), and charts your best hold against the 2:00 goal line.
+During any table/max hold, a **First urge** button lets you mark the moment the urge
+to breathe arrives — that urge-free time is the freediving progress number, tracked
+on the Progress tab alongside your best totals. The app suggests today's session
+(Comfort by default, the others rotated weekly, a rest day after 6 straight).
 
 ## Use it on your iPhone
 
@@ -51,11 +55,11 @@ required — the clock runs until you tap.
 
 ## Your goal
 
-Tap the goal card on the **Progress** tab to set your target hold (presets 1:30–3:00
-or custom) and target date. The header, progress bar, days-left countdown, and the
-chart's goal line all follow it. CO₂ table levels scale with your personal best
-(40/55/70%, capped at 90s — long holds are trained in O₂ tables and max tests,
-not brutal fixed CO₂ tables).
+The goal is a **comfortable hold**: your urge-free time reaching the target, not a
+one-off max. Tap the goal card on the **Progress** tab to set the target (presets
+1:30–3:00 or custom) and date. The header, progress bar, countdown, and the chart's
+goal line all follow it; the chart shows both best-total (gold) and urge-free (teal)
+lines per session.
 
 ## Sharing it with other people
 
@@ -78,6 +82,10 @@ a week can have its site data evicted.
 
 ## Safety — read this
 
+- **This app is for dry training only.** Dry land, sitting or lying down, never while
+  driving. If you're training toward freediving: in-water apnea is only ever done with
+  a trained buddy — never alone — and a certification course (AIDA, Molchanovs, PFI,
+  SSI) is the bridge from these dry numbers to the water.
 - **Never practice breath-holds in or near water.** Dry land, sitting or lying down, only.
 - **Never hyperventilate before a hold.** Fast deep breathing removes the CO₂ warning
   signal and can make you black out with no warning. Calm, normal breathing only.

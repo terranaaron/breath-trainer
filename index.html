@@ -53,9 +53,9 @@
     font-size: 12px; color: var(--ink-dim); letter-spacing: 1px; margin-bottom: 12px; min-height: 18px; }
   .suggestion .chip { color: var(--gold); font-weight: 500; }
 
-  .mode-picker { display: flex; gap: 8px; margin-bottom: 10px; }
+  .mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
   .mode-picker button {
-    flex: 1; padding: 12px 6px; background: var(--bg-elev); color: var(--ink-dim);
+    padding: 12px 6px; background: var(--bg-elev); color: var(--ink-dim);
     border: 1px solid var(--line); border-radius: 12px; font-size: 12px;
     cursor: pointer; font-family: inherit; line-height: 1.4;
   }
@@ -90,6 +90,12 @@
   .target-note { font-size: 12px; color: var(--ink-dim); margin-top: 8px; letter-spacing: 1px; min-height: 15px; }
   .round-info { font-size: 13px; color: var(--ink-dim); margin-top: 10px; letter-spacing: 1px; }
 
+  .urge-btn { width: 100%; padding: 13px; background: transparent; color: var(--rest); border: 1px solid var(--rest);
+    border-radius: 12px; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; font-family: inherit; margin-bottom: 10px; }
+  .urge-btn:active { transform: scale(0.98); }
+  .urge-btn.hidden { display: none; }
+
   .action-btn { width: 100%; padding: 20px; background: var(--hold); color: var(--bg); border: none;
     border-radius: 14px; font-size: 16px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
     cursor: pointer; font-family: inherit; margin-bottom: 12px; transition: transform 0.1s, background-color 0.3s; }
@@ -123,6 +129,7 @@
   .hold-actual { color: var(--gold); font-weight: 500; font-size: 12px; margin-left: 6px; }
   .hold-actual.under { color: var(--ink-dim); }
   .exhale-actual { color: var(--exhale); font-size: 11px; margin-left: 5px; }
+  .urge-actual { color: var(--rest); font-size: 11px; margin-left: 5px; }
   .rest-time { color: var(--ink-dim); font-size: 12px; }
 
   .safety { font-size: 11px; color: var(--ink-dim); text-align: center; padding: 10px 16px 20px; line-height: 1.6; }
@@ -134,9 +141,10 @@
   .goal-days { font-size: 11px; color: var(--ink-dim); }
   .goal-numbers { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   .goal-pb { font-family: "SF Mono", monospace; font-size: 32px; font-weight: 300; letter-spacing: -1px; }
-  .goal-target { font-size: 12px; color: var(--ink-dim); text-align: right; line-height: 1.5; }
+  .goal-target { font-size: 12px; color: var(--ink-dim); text-align: right; line-height: 1.5; max-width: 55%; }
   .goal-bar { height: 6px; background: var(--bg-elev-2); border-radius: 3px; overflow: hidden; position: relative; }
   .goal-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.5s; }
+  .goal-sub { font-size: 11px; color: var(--ink-dim); margin-top: 8px; }
   .goal-edit-hint { font-size: 10px; color: var(--ink-faint); letter-spacing: 1px; text-transform: uppercase; text-align: center; margin-top: 10px; }
 
   .goal-editor { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
@@ -173,6 +181,8 @@
   .chart-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
   .chart-title { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
   .chart-svg { width: 100%; height: 130px; display: block; }
+  .chart-legend { display: flex; gap: 14px; justify-content: center; font-size: 10px; color: var(--ink-dim); margin-top: 6px; letter-spacing: 1px; }
+  .chart-legend .lg { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
 
   .session-list-title { font-size: 11px; color: var(--ink-dim); letter-spacing: 2px; text-transform: uppercase; margin: 8px 4px 10px; }
   .session-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; }
@@ -187,6 +197,7 @@
   .session-card.expanded .session-detail { display: block; }
   .detail-row { display: flex; justify-content: space-between; font-family: "SF Mono", monospace; font-size: 11px;
     color: var(--ink-dim); padding: 3px 0; font-variant-numeric: tabular-nums; }
+  .detail-row .d-urge { color: var(--rest); }
   .detail-row .d-pure { color: var(--hold); }
   .detail-row .d-ex { color: var(--exhale); }
   .detail-row .d-total { color: var(--gold); }
@@ -225,7 +236,8 @@
   <div class="suggestion" id="suggestion"></div>
 
   <div class="mode-picker" id="modePicker">
-    <button data-mode="co2" class="active">CO₂ Table<small>fixed hold · shrinking rest</small></button>
+    <button data-mode="comfort" class="active">Comfort<small>hold to first urge · 2:00 rest</small></button>
+    <button data-mode="co2">CO₂ Table<small>fixed hold · shrinking rest</small></button>
     <button data-mode="o2">O₂ Table<small>growing hold · fixed rest</small></button>
     <button data-mode="max">Max Test<small>one all-out hold</small></button>
   </div>
@@ -240,6 +252,7 @@
     <div class="round-info" id="roundInfo">Tap Start when you're ready</div>
   </div>
 
+  <button class="urge-btn hidden" id="urgeBtn">First urge</button>
   <button class="action-btn hidden" id="releaseBtn">Begin exhale</button>
 
   <div class="controls">
@@ -250,9 +263,9 @@
   <div class="rounds" id="rounds"></div>
 
   <div class="safety">
-    <strong>Never practice in or near water. Never hyperventilate first.</strong><br>
-    Sit or lie down. Breathe calmly between holds — don't gulp air.<br>
-    Stop immediately if you feel dizzy or tingly. One table session per day.
+    <strong>Dry training only — never in or near water, never while driving. Never hyperventilate.</strong><br>
+    Sit or lie down. In-water apnea needs a trained buddy — never alone.<br>
+    Stop if dizzy or tingly. A freediving course (AIDA · Molchanovs · PFI · SSI) is the bridge to water.
   </div>
 </div>
 
@@ -265,31 +278,34 @@
 <script>
   const PROFILE_KEY = 'co2trainer_profile_v1';
   const CO2_REST_PATTERN = [105, 90, 75, 60, 45, 30, 20, 15];
-  const O2_RAMP = [0.40, 0.46, 0.52, 0.58, 0.64, 0.70, 0.75, 0.80];
+  const O2_RAMP = [0.40, 0.47, 0.54, 0.61, 0.68, 0.74, 0.80, 0.85];
   const O2_REST = 120;
+  const COMFORT_ROUNDS = 8, COMFORT_REST = 120;
   const STORAGE_KEY = 'co2trainer_sessions_v1';
   const DEFAULT_GOAL_SEC = 120;
   const DEFAULT_GOAL_DATE = '2026-10-31';
   const GOAL_PRESETS = [90, 120, 150, 180];
   const WEEKLY_TARGET = 5;
   const CO2_TIERS = [ ['Beginner', 0.40, 45], ['Standard', 0.55, 60], ['Advanced', 0.70, 75] ];
-  const CO2_FLOOR = 20, CO2_CAP = 90;
+  const CO2_FLOOR = 20, CO2_CAP = 120;
   const TAP_DEBOUNCE_MS = 400;
+  const COMFORT_WINDOW_DAYS = 14;
 
-  let mode = 'co2';
+  let mode = 'comfort';
   let co2Tier = 0;
-  let plan = [];                // [{target, rest, done, actual: {total,pure,exhale}|null}]
+  let plan = [];                // [{target, rest, done, actual}]
   let currentRound = 0;
   let phase = 'idle';           // idle | prep | hold | exhale | rest | done
-  let phaseStart = 0;           // ms timestamp, prep/rest countdowns
-  let phaseDuration = 0;        // seconds, prep/rest countdowns
-  let holdStartTs = null;       // t0 — hold begins
-  let exhaleStartTs = null;     // t1 — exhale begins (tap 1)
-  let purePending = 0;          // frozen pure-hold seconds after tap 1
+  let phaseStart = 0;
+  let phaseDuration = 0;
+  let holdStartTs = null;       // t0
+  let exhaleStartTs = null;     // t1 (tap: begin exhale)
+  let purePending = 0;
+  let urgeMarked = null;        // seconds; via First-urge button (non-comfort modes)
   let lastPhaseTapTs = 0;
   let pausedAt = null;
   let ticker = null;
-  let holdActuals = [];         // [{total, pure, exhale}]
+  let holdActuals = [];         // [{total, pure, exhale, urge?}]
   let targetBeeped = false;
   let pbBeeped = false;
   let lastMilestone = 0;
@@ -300,7 +316,7 @@
   const $ = id => document.getElementById(id);
   const stage = $('stage'), stateLabel = $('stateLabel'), timerEl = $('timer');
   const targetNote = $('targetNote'), roundInfoEl = $('roundInfo');
-  const startBtn = $('startBtn'), resetBtn = $('resetBtn'), releaseBtn = $('releaseBtn');
+  const startBtn = $('startBtn'), resetBtn = $('resetBtn'), releaseBtn = $('releaseBtn'), urgeBtn = $('urgeBtn');
   const roundsEl = $('rounds'), levelPicker = $('levelPicker'), modePicker = $('modePicker');
   const modeNote = $('modeNote'), suggestionEl = $('suggestion');
 
@@ -329,15 +345,24 @@
     return { sec: p.goalSec || DEFAULT_GOAL_SEC, date: p.goalDate || DEFAULT_GOAL_DATE };
   }
 
-  // Holds were stored as bare integers before the two-tap update; new records are
-  // {total, pure, exhale}. Every read goes through these — never index holds raw.
+  // Three storage generations coexist: bare integers (gen 1), {total,pure,exhale}
+  // (gen 2), and gen 2 plus optional urge (gen 3). Read holds ONLY through these.
   function holdTotal(h) { return typeof h === 'number' ? h : h.total; }
   function holdPure(h) { return typeof h === 'number' ? h : (h.pure != null ? h.pure : h.total); }
   function holdExhale(h) { return typeof h === 'number' ? null : h.exhale; }
+  function holdUrge(h) { return typeof h === 'number' ? null : (h.urge != null ? h.urge : null); }
 
   function personalBest() {
     const totals = loadSessions().flatMap(s => (s.holds || []).map(holdTotal));
     return totals.length ? Math.max(...totals) : null;
+  }
+  function comfortableBest(sessions, days = COMFORT_WINDOW_DAYS) {
+    const cutoff = Date.now() - days * 86400000;
+    const urges = sessions
+      .filter(s => new Date(s.date).getTime() > cutoff)
+      .flatMap(s => (s.holds || []).map(holdUrge))
+      .filter(u => u != null);
+    return urges.length ? Math.max(...urges) : null;
   }
 
   // ---------- helpers ----------
@@ -383,7 +408,9 @@
   function currentCo2Hold() { return co2Levels()[co2Tier].secs; }
 
   function buildPlan() {
-    if (mode === 'co2') {
+    if (mode === 'comfort') {
+      plan = Array.from({length: COMFORT_ROUNDS}, () => ({ target: null, rest: COMFORT_REST, done: false, actual: null }));
+    } else if (mode === 'co2') {
       const hold = currentCo2Hold();
       plan = CO2_REST_PATTERN.map(rest => ({ target: hold, rest, done: false, actual: null }));
     } else if (mode === 'o2') {
@@ -410,22 +437,27 @@
 
   function renderModeNote() {
     const pb = personalBest();
-    if (mode === 'co2') {
+    if (mode === 'comfort') {
+      modeNote.textContent = 'End each hold at the first hint of a contraction. A contraction-free week earns +15–20s.';
+    } else if (mode === 'co2') {
       modeNote.textContent = pb
-        ? `Levels scale with your best (${fmtShort(pb)}), capped at ${fmtShort(CO2_CAP)}`
-        : 'New? Start with Beginner.';
+        ? `Hard day — once a week. Levels scale with your best (${fmtShort(pb)}).`
+        : 'Hard day — once a week. New? Start with Beginner.';
     } else if (mode === 'o2') {
-      modeNote.textContent = pb ? `Targets scale from your best: ${fmtShort(pb)}` : 'No best yet — using a starter table. Do a Max Test soon.';
+      modeNote.textContent = pb ? `Targets scale from your best (${fmtShort(pb)}), topping out at 85%` : 'No best yet — using a starter table. Do a Max Test soon.';
     } else {
-      modeNote.textContent = pb ? `Your best: ${fmtShort(pb)} — beat it.` : 'First max test sets your baseline. 2 min of calm breathing, then one relaxed all-out hold.';
+      modeNote.textContent = pb ? `Your best: ${fmtShort(pb)} — relax, ride the contractions.` : 'First max test sets your baseline. 2 min of calm breathing, then one relaxed all-out hold.';
     }
   }
 
   function actualHtml(r) {
     if (r.actual == null) return '';
-    const under = r.target != null && r.actual.pure < r.target;
-    return `<span class="hold-actual ${under ? 'under' : ''}">${r.actual.pure}s hold</span>`
-         + `<span class="exhale-actual">+${r.actual.exhale}s ex</span>`;
+    const a = r.actual;
+    if (mode === 'comfort')
+      return `<span class="hold-actual">${a.pure}s urge-free</span><span class="exhale-actual">+${a.exhale}s ex</span>`;
+    const under = r.target != null && a.pure < r.target;
+    const urgeHtml = a.urge != null ? `<span class="urge-actual">urge ${a.urge}s</span>` : '';
+    return `<span class="hold-actual ${under ? 'under' : ''}">${a.pure}s hold</span><span class="exhale-actual">+${a.exhale}s ex</span>${urgeHtml}`;
   }
 
   function renderRounds() {
@@ -435,7 +467,7 @@
           <div class="round-dot ${plan[0] && plan[0].done ? 'checked' : ''}"></div>
           <div class="round-num">01</div>
           <div class="round-detail">
-            <span><span class="hold-time">Max hold</span>${plan[0] && plan[0].actual != null ? `<span class="hold-actual">${fmtShort(plan[0].actual.total)} total</span>` : ''}</span>
+            <span><span class="hold-time">Max hold</span>${plan[0] && plan[0].actual != null ? `<span class="hold-actual">${fmtShort(plan[0].actual.total)} total</span>${plan[0].actual.urge != null ? `<span class="urge-actual">urge ${fmtShort(plan[0].actual.urge)}</span>` : ''}` : ''}</span>
             <span class="rest-time">after 2:00 calm breathing</span>
           </div>
         </div>`;
@@ -446,32 +478,41 @@
           <div class="round-dot ${r.done ? 'checked' : ''}"></div>
           <div class="round-num">${String(i+1).padStart(2,'0')}</div>
           <div class="round-detail">
-            <span><span class="hold-time">Hold ${r.target}s</span>${actualHtml(r)}</span>
+            <span><span class="hold-time">${r.target == null ? 'To first urge' : 'Hold ' + r.target + 's'}</span>${actualHtml(r)}</span>
             <span class="rest-time">${i === plan.length - 1 ? 'final' : 'rest ' + r.rest + 's'}</span>
           </div>
         </div>
       `).join('');
   }
 
-  // ---------- suggestion ----------
+  // ---------- suggestion (freediving week: comfort is the default day) ----------
+  function consecutiveTrainedDays(sessions) {
+    const dayKeys = new Set(sessions.map(s => new Date(s.date).toDateString()));
+    let n = 0;
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(Date.now() - i * 86400000);
+      if (dayKeys.has(d.toDateString())) n++; else break;
+    }
+    return n;
+  }
   function todaysSuggestion() {
     const sessions = loadSessions();
     if (!sessions.length) return { text: 'Start with a <span class="chip">Max Test</span> to set your baseline' };
     const todayKey = new Date().toDateString();
     if (sessions.some(s => new Date(s.date).toDateString() === todayKey))
       return { text: 'Trained today ✓ — recovery is part of the program' };
+    if (consecutiveTrainedDays(sessions) >= 6)
+      return { text: '6 days straight — take a <span class="chip">rest day</span>' };
     const now = Date.now();
-    const lastMax = sessions.find(s => sessionMode(s) === 'max');
-    if (!lastMax || now - new Date(lastMax.date).getTime() > 7 * 86400000)
-      return { text: 'Weekly check-in: <span class="chip">Max Test</span>' };
-    const lastTable = sessions.find(s => sessionMode(s) !== 'max');
-    if (lastTable && sessionMode(lastTable) === 'co2')
-      return { text: 'Today: <span class="chip">O₂ Table</span> (you did CO₂ last)' };
-    return { text: 'Today: <span class="chip">CO₂ Table</span>' };
+    const within7 = m => sessions.some(s => sessionMode(s) === m && now - new Date(s.date).getTime() < 7 * 86400000);
+    if (!within7('max')) return { text: 'Weekly check-in: <span class="chip">Max Test</span>' };
+    if (!within7('o2')) return { text: 'Today: <span class="chip">O₂ Table</span>' };
+    if (!within7('co2')) return { text: 'Hard day: <span class="chip">CO₂ Table</span>' };
+    return { text: 'Today: <span class="chip">Comfort Table</span> — relaxed reps' };
   }
   function renderSuggestion() { suggestionEl.innerHTML = todaysSuggestion().text; }
 
-  // ---------- timing (timestamp-based; survives throttling) ----------
+  // ---------- timing ----------
   function totalElapsed() { return (Date.now() - holdStartTs) / 1000; }
   function remainingSec() { return phaseDuration - (Date.now() - phaseStart) / 1000; }
   function startTicker() { clearInterval(ticker); ticker = setInterval(tick, 200); }
@@ -479,7 +520,7 @@
 
   function tick() {
     if (phase === 'hold') {
-      const t = Math.floor(totalElapsed());   // pure hold elapsed (exhale not begun)
+      const t = Math.floor(totalElapsed());
       const target = plan[currentRound].target;
       if (target != null && !targetBeeped && t >= target) {
         targetBeeped = true; beep(880, 0.4, 0.35); buzz(200);
@@ -491,7 +532,7 @@
       }
       updateUI();
     } else if (phase === 'exhale') {
-      if (mode === 'max') checkPbCrossing(Math.floor(totalElapsed()));  // total still climbing
+      if (mode === 'max') checkPbCrossing(Math.floor(totalElapsed()));
       updateUI();
     } else if (phase === 'rest' || phase === 'prep') {
       const rem = Math.ceil(remainingSec());
@@ -517,33 +558,43 @@
     holdStartTs = Date.now();
     exhaleStartTs = null;
     purePending = 0;
+    urgeMarked = null;
     targetBeeped = false; pbBeeped = false; lastMilestone = 0;
     beep(523, 0.3, 0.4); buzz(120);
     renderRounds(); updateUI();
     startTicker();
   }
 
+  function markUrge() {
+    if (phase !== 'hold' || mode === 'comfort' || urgeMarked != null || pausedAt) return;
+    urgeMarked = Math.floor(totalElapsed());
+    beep(330, 0.15, 0.25); buzz(60);
+    updateUI();
+  }
+
   function beginExhale() {
     if (phase !== 'hold') return;
     exhaleStartTs = Date.now();
     purePending = Math.floor((exhaleStartTs - holdStartTs) / 1000);
+    if (mode === 'comfort') urgeMarked = purePending;   // comfort protocol: tap 1 IS the first urge
     lastPhaseTapTs = exhaleStartTs;
     phase = 'exhale';
-    beep(392, 0.25, 0.35); buzz(120);            // tap 1: single low tone + single buzz
+    beep(392, 0.25, 0.35); buzz(120);
     updateUI();
   }
 
   function completeExhale() {
     if (phase !== 'exhale') return;
-    if (Date.now() - lastPhaseTapTs < TAP_DEBOUNCE_MS) return;  // fat-finger guard
+    if (Date.now() - lastPhaseTapTs < TAP_DEBOUNCE_MS) return;
     stopTicker();
     const total = Math.floor(totalElapsed());
     const rec = { total, pure: purePending, exhale: total - purePending };
+    if (urgeMarked != null) rec.urge = urgeMarked;
     plan[currentRound].actual = rec;
     plan[currentRound].done = true;
     holdActuals.push(rec);
     holdStartTs = null; exhaleStartTs = null;
-    beep(784, 0.2, 0.4); setTimeout(() => beep(988, 0.25, 0.35), 130);  // tap 2: resolving pair
+    beep(784, 0.2, 0.4); setTimeout(() => beep(988, 0.25, 0.35), 130);
     buzz([80, 60, 80]);
 
     if (currentRound >= plan.length - 1) { finish(); return; }
@@ -571,7 +622,7 @@
     });
     releaseWakeLock();
     startBtn.textContent = 'Start';
-    buildPlan();  // PB may have moved — refresh scaled levels/targets
+    buildPlan();
     updateUI(); renderSuggestion(); renderProfile();
     if (newBest && mode === 'max') {
       stateLabel.textContent = 'New personal best';
@@ -599,6 +650,7 @@
     stage.classList.remove('is-hold', 'is-exhale', 'is-rest', 'is-target-reached');
     releaseBtn.classList.add('hidden');
     releaseBtn.classList.remove('exhaling');
+    urgeBtn.classList.add('hidden');
     targetNote.textContent = '';
 
     if (phase === 'hold') {
@@ -606,24 +658,31 @@
       const target = plan[currentRound].target;
       stage.classList.add('is-hold');
       if (target != null && t >= target) stage.classList.add('is-target-reached');
-      if (mode === 'max') {
+      const urgeSuffix = urgeMarked != null ? ` · urge @ ${fmt(urgeMarked)}` : '';
+      if (mode === 'comfort') {
+        stateLabel.textContent = 'Hold — stay relaxed';
+        targetNote.textContent = 'tap at the first hint of a contraction';
+        roundInfoEl.textContent = `Round ${currentRound + 1} of ${plan.length} · tap to begin exhale`;
+      } else if (mode === 'max') {
         const pb = personalBest();
         if (pb && t > pb) stage.classList.add('is-target-reached');
         stateLabel.textContent = (pb && t > pb) ? 'New best — keep going' : 'Hold';
-        targetNote.textContent = pb ? `best ${fmtShort(pb)} · goal ${fmtShort(getGoal().sec)}` : `goal ${fmtShort(getGoal().sec)}`;
+        targetNote.textContent = (pb ? `best ${fmtShort(pb)} · goal ${fmtShort(getGoal().sec)}` : `goal ${fmtShort(getGoal().sec)}`) + urgeSuffix;
+        roundInfoEl.textContent = 'Tap anywhere to begin exhale';
       } else {
         stateLabel.textContent = (t >= target) ? 'Target reached — exhale when ready' : 'Hold';
-        targetNote.textContent = `target ${target}s pure hold`;
+        targetNote.textContent = `target ${target}s pure hold` + urgeSuffix;
+        roundInfoEl.textContent = `Round ${currentRound + 1} of ${plan.length} · tap to begin exhale`;
       }
       timerEl.textContent = fmt(t);
-      roundInfoEl.textContent = mode === 'max' ? 'Tap anywhere to begin exhale' : `Round ${currentRound + 1} of ${plan.length} · tap to begin exhale`;
       releaseBtn.textContent = 'Begin exhale';
       releaseBtn.classList.remove('hidden');
+      if (mode !== 'comfort' && urgeMarked == null) urgeBtn.classList.remove('hidden');
     } else if (phase === 'exhale') {
       stage.classList.add('is-exhale');
       stateLabel.textContent = 'Exhale — tap when complete';
       timerEl.textContent = fmt(Math.floor(totalElapsed()));
-      targetNote.textContent = `pure hold ${fmtShort(purePending)} — still counting`;
+      targetNote.textContent = (mode === 'comfort' ? `urge-free ${fmtShort(purePending)}` : `pure hold ${fmtShort(purePending)}`) + ' — still counting';
       roundInfoEl.textContent = 'Tap anywhere when your exhale is done';
       releaseBtn.textContent = 'Exhale complete';
       releaseBtn.classList.remove('hidden');
@@ -633,7 +692,7 @@
       stateLabel.textContent = 'Breathe';
       timerEl.textContent = fmt(Math.ceil(remainingSec()));
       const next = plan[currentRound + 1];
-      targetNote.textContent = next ? `next hold: ${next.target}s` : '';
+      targetNote.textContent = next ? (next.target == null ? 'next: hold to first urge' : `next hold: ${next.target}s`) : '';
       roundInfoEl.textContent = 'Calm, gentle breaths — don\'t gulp air';
     } else if (phase === 'prep') {
       stateLabel.textContent = mode === 'max' ? 'Breathe up — calm & slow' : 'Get ready';
@@ -642,7 +701,12 @@
     } else if (phase === 'done') {
       stateLabel.textContent = 'Complete';
       timerEl.textContent = '✓';
-      roundInfoEl.textContent = holdActuals.length ? `Best this session: ${fmtShort(Math.max(...holdActuals.map(h => h.total)))} total · logged` : 'Session logged';
+      if (holdActuals.length && mode === 'comfort') {
+        const avg = Math.round(holdActuals.reduce((a, h) => a + h.pure, 0) / holdActuals.length);
+        roundInfoEl.textContent = `Avg urge-free ${fmtShort(avg)} · logged`;
+      } else {
+        roundInfoEl.textContent = holdActuals.length ? `Best this session: ${fmtShort(Math.max(...holdActuals.map(h => h.total)))} total · logged` : 'Session logged';
+      }
     } else {
       stateLabel.textContent = 'Ready';
       timerEl.textContent = '00:00';
@@ -674,7 +738,7 @@
     stopTicker();
     phase = 'idle';
     currentRound = 0; holdActuals = []; pausedAt = null;
-    holdStartTs = null; exhaleStartTs = null; purePending = 0;
+    holdStartTs = null; exhaleStartTs = null; purePending = 0; urgeMarked = null;
     buildPlan();
     releaseWakeLock();
     startBtn.textContent = 'Start';
@@ -689,11 +753,16 @@
   }
   releaseBtn.addEventListener('click', stageTap);
   stage.addEventListener('click', stageTap);
+  urgeBtn.addEventListener('click', e => { e.stopPropagation(); markUrge(); });
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.target.tagName === 'INPUT') return;
-    e.preventDefault();
-    if (phase === 'hold' || phase === 'exhale') stageTap();
-    else if (phase === 'idle' || phase === 'done') startBtn.click();
+    if (e.target.tagName === 'INPUT') return;
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (phase === 'hold' || phase === 'exhale') stageTap();
+      else if (phase === 'idle' || phase === 'done') startBtn.click();
+    } else if (e.code === 'KeyU') {
+      markUrge();
+    }
   });
 
   modePicker.addEventListener('click', e => {
@@ -767,57 +836,77 @@
 
   function renderChart(sessions) {
     const goalSec = getGoal().sec;
-    const data = sessions.slice(0, 30).reverse().map(s => Math.max(...s.holds.map(holdTotal)));
-    if (data.length < 2) return '';
+    const recent = sessions.slice(0, 30).reverse();
+    const totals = recent.map(s => Math.max(...s.holds.map(holdTotal)));
+    if (totals.length < 2) return '';
+    const urges = recent.map(s => {
+      const u = s.holds.map(holdUrge).filter(v => v != null);
+      return u.length ? Math.max(...u) : null;
+    });
     const w = 320, h = 110, pad = 10;
-    const max = Math.max(...data, goalSec + 15);
+    const max = Math.max(...totals, goalSec + 15);
     const range = Math.max(max, 10);
     const yOf = v => h - pad - (v / range) * (h - pad*2);
-    const stepX = (w - pad*2) / (data.length - 1);
-    const pts = data.map((v, i) => [pad + i * stepX, yOf(v)]);
-    const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-    const area = path + ` L ${pts[pts.length-1][0]},${h} L ${pts[0][0]},${h} Z`;
-    const dots = pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="#d4a574"/>`).join('');
+    const stepX = totals.length > 1 ? (w - pad*2) / (totals.length - 1) : 0;
+    const xOf = i => pad + i * stepX;
+
+    const tPts = totals.map((v, i) => [xOf(i), yOf(v)]);
+    const tPath = tPts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const tArea = tPath + ` L ${tPts[tPts.length-1][0]},${h} L ${tPts[0][0]},${h} Z`;
+    const tDots = tPts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="#d4a574"/>`).join('');
+
+    const uPts = urges.map((v, i) => v == null ? null : [xOf(i), yOf(v)]).filter(Boolean);
+    let urgeSvg = '';
+    if (uPts.length >= 2) {
+      const uPath = uPts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+      urgeSvg = `<path d="${uPath}" stroke="#7ecab1" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`;
+    }
+    if (uPts.length) urgeSvg += uPts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="#7ecab1"/>`).join('');
+
     const gy = yOf(goalSec).toFixed(1);
     return `
       <svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-        <line x1="${pad}" y1="${gy}" x2="${w-pad}" y2="${gy}" stroke="#7ecab1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
-        <text x="${w-pad}" y="${gy - 4}" text-anchor="end" font-size="9" fill="#7ecab1" opacity="0.8">${fmtShort(goalSec)} goal</text>
-        <path d="${area}" fill="#d4a574" fill-opacity="0.1"/>
-        <path d="${path}" stroke="#d4a574" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-        ${dots}
+        <line x1="${pad}" y1="${gy}" x2="${w-pad}" y2="${gy}" stroke="#8a94a3" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"/>
+        <text x="${w-pad}" y="${gy - 4}" text-anchor="end" font-size="9" fill="#8a94a3" opacity="0.9">${fmtShort(goalSec)} goal</text>
+        <path d="${tArea}" fill="#d4a574" fill-opacity="0.1"/>
+        <path d="${tPath}" stroke="#d4a574" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+        ${tDots}
+        ${urgeSvg}
       </svg>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-dim);margin-top:4px;letter-spacing:1px">
-        <span>${data.length} session${data.length !== 1 ? 's' : ''}</span>
-        <span>best: ${fmtShort(Math.max(...data))}</span>
+      <div class="chart-legend">
+        <span><span class="lg" style="background:#d4a574"></span>best total</span>
+        <span><span class="lg" style="background:#7ecab1"></span>urge-free</span>
       </div>
     `;
   }
 
-  const MODE_LABEL = { co2: 'CO₂', o2: 'O₂', max: 'MAX' };
-
-  function goalCardHtml() {
+  function goalCardHtml(sessions) {
     const g = getGoal();
     const pb = personalBest();
+    const comfy = comfortableBest(sessions);
     const end = new Date(g.date + 'T23:59:59');
     const daysLeft = Math.max(0, Math.ceil((end - Date.now()) / 86400000));
-    const pct = pb ? Math.min(100, Math.round((pb / g.sec) * 100)) : 0;
+    const pct = comfy ? Math.min(100, Math.round((comfy / g.sec) * 100)) : 0;
     const dateLabel = end.toLocaleDateString([], {month: 'short', day: 'numeric'});
+    const targetText = comfy == null
+      ? 'tap “First urge” during holds to track this'
+      : (pct >= 100 ? 'goal reached — raise it 🎉' : pct + '% of ' + fmtShort(g.sec));
     return `
       <div class="goal-card" id="goalCard">
         <div class="goal-head">
-          <div class="goal-title">Goal · ${fmtShort(g.sec)} hold</div>
+          <div class="goal-title">Goal · ${fmtShort(g.sec)} comfortable</div>
           <div class="goal-days">${daysLeft} days left · ${dateLabel}</div>
         </div>
         <div class="goal-numbers">
-          <div class="goal-pb">${pb ? fmtShort(pb) : '—'}</div>
-          <div class="goal-target">${pb == null ? 'no best yet' : pct >= 100 ? 'goal reached — raise it 🎉' : pct + '% of ' + fmtShort(g.sec)}</div>
+          <div class="goal-pb">${comfy != null ? fmtShort(comfy) : '—'}</div>
+          <div class="goal-target">${targetText}</div>
         </div>
         <div class="goal-bar"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
+        <div class="goal-sub">urge-free hold, last ${COMFORT_WINDOW_DAYS} days · best total ${pb != null ? fmtShort(pb) : '—'}</div>
         <div class="goal-edit-hint">tap to edit goal</div>
       </div>
       <div class="goal-editor" id="goalEditor" style="display:none">
-        <div class="stat-label">Target hold</div>
+        <div class="stat-label">Target comfortable hold</div>
         <div class="goal-presets">
           ${GOAL_PRESETS.map(s => `<button data-goal="${s}" class="${s === g.sec ? 'active' : ''}">${fmtShort(s)}</button>`).join('')}
         </div>
@@ -867,9 +956,10 @@
   function detailRows(s) {
     return (s.holds || []).map((h, i) => {
       if (typeof h === 'number')
-        return `<div class="detail-legacy">${String(i+1).padStart(2,'0')} · ${h}s (single-tap record — no exhale breakdown)</div>`;
+        return `<div class="detail-legacy">${String(i+1).padStart(2,'0')} · ${h}s (single-tap record — no breakdown)</div>`;
       return `<div class="detail-row">
         <span>${String(i+1).padStart(2,'0')}</span>
+        ${h.urge != null ? `<span class="d-urge">${fmtShort(h.urge)} urge</span>` : ''}
         <span class="d-pure">${h.pure}s hold</span>
         <span class="d-ex">+${h.exhale}s exhale</span>
         <span class="d-total">${fmtShort(h.total)} total</span>
@@ -877,22 +967,32 @@
     }).join('');
   }
 
+  function sessionDesc(s) {
+    const m = sessionMode(s);
+    const best = Math.max(...s.holds.map(holdTotal));
+    if (m === 'comfort') {
+      const urges = s.holds.map(holdUrge).filter(u => u != null);
+      return urges.length ? `comfort · best urge-free ${fmtShort(Math.max(...urges))}` : `comfort · best ${fmtShort(best)}`;
+    }
+    if (m === 'max') return `max test · ${fmtShort(best)}`;
+    if (m === 'o2') return `O₂ table · best ${fmtShort(best)}`;
+    return `CO₂${s.level ? ' ' + s.level + 's' : ''} · best ${fmtShort(best)}`;
+  }
+
   function renderHistory() {
     const sessions = loadSessions();
     const container = $('historyContent');
 
     if (sessions.length === 0) {
-      container.innerHTML = goalCardHtml() + `<div class="empty-state">No sessions yet.<br>Start with a Max Test to set your baseline.</div>`;
+      container.innerHTML = goalCardHtml(sessions) + `<div class="empty-state">No sessions yet.<br>Start with a Max Test to set your baseline.</div>`;
       wireGoalEditor(renderHistory);
       return;
     }
 
     const cons = consistencyStats(sessions);
-    const recentTotals = sessions.slice(0, 5).flatMap(s => s.holds.map(holdTotal));
-    const avg = Math.round(recentTotals.reduce((a,b) => a+b, 0) / recentTotals.length);
 
     container.innerHTML = `
-      ${goalCardHtml()}
+      ${goalCardHtml(sessions)}
 
       <div class="stat-grid">
         <div class="stat-card">
@@ -919,22 +1019,18 @@
       </div>
 
       <div class="chart-card">
-        <div class="chart-title">Best total hold per session</div>
+        <div class="chart-title">Per session · total & urge-free</div>
         ${renderChart(sessions) || '<div style="font-size:12px;color:var(--ink-dim);padding:12px 0">Complete a second session to see progress.</div>'}
       </div>
 
       <div class="session-list-title">Recent sessions · tap for breakdown</div>
       ${sessions.slice(0, 20).map((s, idx) => {
-        const best = Math.max(...s.holds.map(holdTotal));
         const m = sessionMode(s);
-        const desc = m === 'max' ? `max test · ${fmtShort(best)}`
-          : m === 'o2' ? `O₂ table · best ${fmtShort(best)}`
-          : `CO₂ ${s.level || ''}s · best ${fmtShort(best)}`;
         return `
           <div class="session-card" data-session="${idx}">
             <div class="session-head">
               <div class="session-date">${formatDate(s.date)}</div>
-              <div class="session-level">${desc}</div>
+              <div class="session-level">${sessionDesc(s)}</div>
             </div>
             <div class="session-holds">
               ${s.holds.map((h, i) => {
@@ -1003,12 +1099,12 @@
     e.target.value = '';
   });
 
-  // ---------- profile (device-bound name + goal) ----------
+  // ---------- profile ----------
   function renderProfile() {
     const name = profileName();
     const g = getGoal();
     const dateLabel = new Date(g.date + 'T12:00:00').toLocaleDateString([], {month: 'short', day: 'numeric'});
-    $('whoLine').textContent = `${name ? name + ' · ' : ''}toward ${fmtShort(g.sec)} by ${dateLabel}`;
+    $('whoLine').textContent = `${name ? name + ' · ' : ''}toward ${fmtShort(g.sec)} comfortable by ${dateLabel}`;
     $('setupCard').style.display = name ? 'none' : 'block';
   }
   $('nameSave').addEventListener('click', () => {

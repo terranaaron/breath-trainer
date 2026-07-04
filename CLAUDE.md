@@ -12,12 +12,18 @@ Personal training tool, not a venture. Goal: Aaron holds his breath 2:00
   `co2trainer_sessions_v1` as an array of `{date, mode?, level?, targets?, holds[]}`.
   Old records have no `mode` (treat as `co2`). Never break reads of existing records —
   Aaron's training history is the product.
-  Each hold is `{total, pure, exhale}` (two-tap: tap 1 = begin exhale, tap 2 = done);
-  **pre-two-tap records store bare integers** — read every hold through the
-  `holdTotal()/holdPure()/holdExhale()` helpers, never index raw. `total` is the
-  canonical headline (PB, chart, goal); table targets compare against `pure`.
+  Three hold generations coexist: bare integers (gen 1), `{total, pure, exhale}`
+  (gen 2), plus optional `urge` (gen 3, seconds to first contraction; in comfort
+  mode `urge === pure` by protocol). Read every hold ONLY through
+  `holdTotal()/holdPure()/holdExhale()/holdUrge()`. `total` = headline for PB;
+  table targets compare against `pure`; the goal is judged on `urge`
+  (best urge-free hold, 14-day window).
+  Modes: `comfort` (default day, no targets, end at first contraction),
+  `co2` (hard day, 1×/wk, levels 40/55/70% of PB, floor 20s cap 120s),
+  `o2` (ramp tops at 85%), `max` (weekly). Old sessions have no `mode` → co2.
   Profile under `co2trainer_profile_v1`: `{name, goalSec?, goalDate?}` (defaults
-  2:00 / 2026-10-31). CO₂ levels scale 40/55/70% of PB, floor 20s cap 90s.
+  2:00 / 2026-10-31). This is a freediving dry-training app — safety copy must
+  keep: dry-only, buddy for any in-water work, never hyperventilate, course names.
   Exports are `{app, owner, exported, sessions[]}`; import must also accept the
   old bare-array format, and warns when `owner` ≠ this device's profile name.
 - **Timing is timestamp-based** (`Date.now()` deltas), never tick-counting —
