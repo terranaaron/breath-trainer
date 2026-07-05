@@ -23,10 +23,22 @@ printable version). It opens the live app — then use Share → **Add to Home S
 | **O₂ Table** | 8 holds that grow each round (40% → 85% of your best), rest fixed at 2:00. Walks you deeper into the hold. | 1× / week |
 | **Max Test** | 2:00 of calm breathing, then one relaxed all-out hold. Sets/updates your baseline. | 1× / week |
 
-During any table/max hold, a **First urge** button lets you mark the moment the urge
-to breathe arrives — that urge-free time is the freediving progress number, tracked
-on the Progress tab alongside your best totals. The app suggests today's session
-(Comfort by default, the others rotated weekly, a rest day after 6 straight).
+During **any** hold, a **First urge** button (or the `U` key) marks the moment the urge
+to breathe arrives. It's a separate event from beginning your exhale: the gap between
+them is how long you rode the urge before stopping. Urge-free time is the freediving
+progress number, tracked on Progress alongside your best totals. In Comfort mode, if
+you don't mark the urge, it's assumed you stopped at it (urge = hold). The app suggests
+today's session (Comfort by default, others rotated weekly, rest day after 6 straight).
+
+## Calm — parasympathetic breathing
+
+A separate **Calm** tab for slow, exhale-weighted breathing that settles the nervous
+system (longer exhales bias you parasympathetic; slowing your rate toward ~6 breaths/min
+is where the heart-rate-variability benefit peaks). Pick a cadence (6→2 breaths/min,
+each exhale-weighted) and a duration (3/5/10 min); a breathing orb paces you with tone
+and haptic cues. The **Journey** card tracks your slowest *comfortable* cadence over
+time, toward a 2-breaths-per-minute (30-second cycle) north star — comfort-bounded,
+never strained. Calm data is stored separately and never affects your hold stats.
 
 ## Use it on your iPhone
 

@@ -208,7 +208,45 @@
   .data-btns button { flex: 1; padding: 12px; background: transparent; color: var(--ink-dim); border: 1px solid var(--line);
     border-radius: 12px; font-size: 12px; letter-spacing: 1px; cursor: pointer; font-family: inherit; }
 
-  @media (max-height: 700px) { .stage { padding: 22px 20px; } .timer { font-size: 64px; } }
+  /* Calm tab */
+  .calm-note { font-size: 12px; color: var(--ink-dim); text-align: center; margin-bottom: 12px; line-height: 1.5; }
+  .cadence-picker, .calm-duration { display: flex; gap: 6px; margin-bottom: 12px; }
+  .cadence-picker button, .calm-duration button {
+    flex: 1; padding: 10px 4px; background: var(--bg-elev); color: var(--ink-dim);
+    border: 1px solid var(--line); border-radius: 10px; font-size: 12px; cursor: pointer;
+    font-family: inherit; line-height: 1.3;
+  }
+  .cadence-picker button.active, .calm-duration button.active {
+    background: var(--rest); color: var(--bg); border-color: var(--rest); font-weight: 600;
+  }
+  .cadence-picker button small { display: block; font-size: 9px; opacity: 0.75; }
+  .calm-stage { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 24px;
+    padding: 20px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; }
+  .calm-orb-wrap { position: relative; width: 236px; height: 236px; display: flex; align-items: center; justify-content: center; }
+  .calm-orb { position: absolute; width: 236px; height: 236px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 45%, rgba(126,202,177,0.35), rgba(126,202,177,0.06) 70%);
+    border: 1px solid var(--rest); transform: scale(0.45); transition: transform 4s ease-in-out; }
+  .calm-orb.exhale { border-color: var(--exhale);
+    background: radial-gradient(circle at 50% 45%, rgba(143,180,217,0.30), rgba(143,180,217,0.05) 70%); }
+  .calm-orb-text { position: relative; text-align: center; z-index: 1; }
+  .calm-phase { font-size: 15px; letter-spacing: 3px; text-transform: uppercase; color: var(--ink); }
+  .calm-count { font-family: "SF Mono", monospace; font-size: 42px; font-weight: 200; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .calm-post { background: var(--bg-elev); border: 1px solid var(--rest); border-radius: 16px; padding: 16px; margin-bottom: 14px; text-align: center; }
+  .calm-post-q { font-size: 13px; color: var(--ink); margin-bottom: 12px; }
+  .calm-post-btns { display: flex; gap: 10px; }
+  .calm-post-btns button { flex: 1; padding: 12px; border-radius: 10px; font-family: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--ink); }
+  .calm-post-btns button.yes { border-color: var(--rest); color: var(--rest); }
+  .journey-card { background: var(--bg-elev); border: 1px solid var(--rest); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .journey-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .journey-title { font-size: 11px; color: var(--rest); letter-spacing: 2px; text-transform: uppercase; }
+  .journey-numbers { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .journey-best { font-family: "SF Mono", monospace; font-size: 30px; font-weight: 300; letter-spacing: -1px; }
+  .journey-target { font-size: 12px; color: var(--ink-dim); text-align: right; line-height: 1.5; max-width: 55%; }
+  .journey-bar { height: 6px; background: var(--bg-elev-2); border-radius: 3px; overflow: hidden; }
+  .journey-bar-fill { height: 100%; background: var(--rest); border-radius: 3px; transition: width 0.5s; }
+  .journey-sub { font-size: 11px; color: var(--ink-dim); margin-top: 8px; }
+
+  @media (max-height: 700px) { .stage { padding: 22px 20px; } .timer { font-size: 64px; } .calm-orb, .calm-orb-wrap { width: 200px; height: 200px; } }
 </style>
 </head>
 <body>
@@ -220,6 +258,7 @@
 
 <div class="tabs">
   <button class="tab active" data-view="train">Train</button>
+  <button class="tab" data-view="calm">Calm</button>
   <button class="tab" data-view="history">Progress</button>
 </div>
 
@@ -266,6 +305,37 @@
     <strong>Dry training only — never in or near water, never while driving. Never hyperventilate.</strong><br>
     Sit or lie down. In-water apnea needs a trained buddy — never alone.<br>
     Stop if dizzy or tingly. A freediving course (AIDA · Molchanovs · PFI · SSI) is the bridge to water.
+  </div>
+</div>
+
+<div class="view" id="view-calm">
+  <div class="calm-note">Slow, exhale-weighted breathing to settle your nervous system. Sit or lie down, breathe through the nose if you can. Comfortable — never strained.</div>
+  <div class="cadence-picker" id="cadencePicker"></div>
+  <div class="calm-stage">
+    <div class="calm-orb-wrap">
+      <div class="calm-orb" id="calmOrb"></div>
+      <div class="calm-orb-text">
+        <div class="calm-phase" id="calmPhase">Ready</div>
+        <div class="calm-count" id="calmCount"></div>
+      </div>
+    </div>
+  </div>
+  <div class="calm-duration" id="calmDurationPicker"></div>
+  <div class="controls">
+    <button id="calmStartBtn" class="primary">Start</button>
+    <button id="calmStopBtn">Stop</button>
+  </div>
+  <div class="calm-post" id="calmPost" style="display:none">
+    <div class="calm-post-q">Was that cadence comfortable the whole way?</div>
+    <div class="calm-post-btns">
+      <button class="yes" id="calmYes">Comfortable ✓</button>
+      <button id="calmNo">A bit of a stretch</button>
+    </div>
+  </div>
+  <div id="journeyCard"></div>
+  <div class="safety">
+    Calming practice is low-risk — but not while driving, and never hyperventilate.<br>
+    Go slower only once the current pace stays comfortable. Straining defeats the purpose.
   </div>
 </div>
 
@@ -453,8 +523,11 @@
   function actualHtml(r) {
     if (r.actual == null) return '';
     const a = r.actual;
-    if (mode === 'comfort')
-      return `<span class="hold-actual">${a.pure}s urge-free</span><span class="exhale-actual">+${a.exhale}s ex</span>`;
+    if (mode === 'comfort') {
+      const rode = a.urge != null && a.urge < a.pure;
+      const u = rode ? `<span class="urge-actual">${a.urge}s urge-free</span>` : '';
+      return `${u}<span class="hold-actual">${a.pure}s hold</span><span class="exhale-actual">+${a.exhale}s ex</span>`;
+    }
     const under = r.target != null && a.pure < r.target;
     const urgeHtml = a.urge != null ? `<span class="urge-actual">urge ${a.urge}s</span>` : '';
     return `<span class="hold-actual ${under ? 'under' : ''}">${a.pure}s hold</span><span class="exhale-actual">+${a.exhale}s ex</span>${urgeHtml}`;
@@ -566,7 +639,7 @@
   }
 
   function markUrge() {
-    if (phase !== 'hold' || mode === 'comfort' || urgeMarked != null || pausedAt) return;
+    if (phase !== 'hold' || urgeMarked != null || pausedAt) return;
     urgeMarked = Math.floor(totalElapsed());
     beep(330, 0.15, 0.25); buzz(60);
     updateUI();
@@ -576,7 +649,6 @@
     if (phase !== 'hold') return;
     exhaleStartTs = Date.now();
     purePending = Math.floor((exhaleStartTs - holdStartTs) / 1000);
-    if (mode === 'comfort') urgeMarked = purePending;   // comfort protocol: tap 1 IS the first urge
     lastPhaseTapTs = exhaleStartTs;
     phase = 'exhale';
     beep(392, 0.25, 0.35); buzz(120);
@@ -589,7 +661,10 @@
     stopTicker();
     const total = Math.floor(totalElapsed());
     const rec = { total, pure: purePending, exhale: total - purePending };
-    if (urgeMarked != null) rec.urge = urgeMarked;
+    // Comfort mode's metric IS urge-free time: if you didn't mark the urge, assume
+    // you stopped at it (urge = pure). Other modes leave urge null when unmarked.
+    const urgeVal = urgeMarked != null ? urgeMarked : (mode === 'comfort' ? purePending : null);
+    if (urgeVal != null) rec.urge = urgeVal;
     plan[currentRound].actual = rec;
     plan[currentRound].done = true;
     holdActuals.push(rec);
@@ -661,8 +736,8 @@
       const urgeSuffix = urgeMarked != null ? ` · urge @ ${fmt(urgeMarked)}` : '';
       if (mode === 'comfort') {
         stateLabel.textContent = 'Hold — stay relaxed';
-        targetNote.textContent = 'tap at the first hint of a contraction';
-        roundInfoEl.textContent = `Round ${currentRound + 1} of ${plan.length} · tap to begin exhale`;
+        targetNote.textContent = urgeMarked != null ? `first urge @ ${fmt(urgeMarked)}` : 'tap “First urge” at the first contraction';
+        roundInfoEl.textContent = `Round ${currentRound + 1} of ${plan.length} · exhale when you stop`;
       } else if (mode === 'max') {
         const pb = personalBest();
         if (pb && t > pb) stage.classList.add('is-target-reached');
@@ -677,12 +752,12 @@
       timerEl.textContent = fmt(t);
       releaseBtn.textContent = 'Begin exhale';
       releaseBtn.classList.remove('hidden');
-      if (mode !== 'comfort' && urgeMarked == null) urgeBtn.classList.remove('hidden');
+      if (urgeMarked == null) urgeBtn.classList.remove('hidden');
     } else if (phase === 'exhale') {
       stage.classList.add('is-exhale');
       stateLabel.textContent = 'Exhale — tap when complete';
       timerEl.textContent = fmt(Math.floor(totalElapsed()));
-      targetNote.textContent = (mode === 'comfort' ? `urge-free ${fmtShort(purePending)}` : `pure hold ${fmtShort(purePending)}`) + ' — still counting';
+      targetNote.textContent = (mode === 'comfort' ? `held ${fmtShort(purePending)}` : `pure hold ${fmtShort(purePending)}`) + ' — still counting';
       roundInfoEl.textContent = 'Tap anywhere when your exhale is done';
       releaseBtn.textContent = 'Exhale complete';
       releaseBtn.classList.remove('hidden');
@@ -702,7 +777,8 @@
       stateLabel.textContent = 'Complete';
       timerEl.textContent = '✓';
       if (holdActuals.length && mode === 'comfort') {
-        const avg = Math.round(holdActuals.reduce((a, h) => a + h.pure, 0) / holdActuals.length);
+        const vals = holdActuals.map(h => h.urge != null ? h.urge : h.pure);
+        const avg = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
         roundInfoEl.textContent = `Avg urge-free ${fmtShort(avg)} · logged`;
       } else {
         roundInfoEl.textContent = holdActuals.length ? `Best this session: ${fmtShort(Math.max(...holdActuals.map(h => h.total)))} total · logged` : 'Session logged';
@@ -756,6 +832,7 @@
   urgeBtn.addEventListener('click', e => { e.stopPropagation(); markUrge(); });
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
+    if (!$('view-train').classList.contains('active')) return;
     if (e.code === 'Space') {
       e.preventDefault();
       if (phase === 'hold' || phase === 'exhale') stageTap();
@@ -790,6 +867,7 @@
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       $('view-' + tab.dataset.view).classList.add('active');
       if (tab.dataset.view === 'history') renderHistory();
+      if (tab.dataset.view === 'calm') { renderCadencePicker(); renderJourney(); }
     });
   });
 
@@ -1122,11 +1200,178 @@
     renderProfile();
   });
 
+  // ---------- calm (parasympathetic breathing) ----------
+  // Own storage key, fully walled off from holds[] / PB / hold goal.
+  const CALM_KEY = 'co2trainer_calm_v1';
+  const CADENCES = [
+    { bpm: 6, inhale: 4, exhale: 6 },
+    { bpm: 5, inhale: 5, exhale: 7 },
+    { bpm: 4, inhale: 6, exhale: 9 },
+    { bpm: 3, inhale: 8, exhale: 12 },
+    { bpm: 2, inhale: 12, exhale: 18 }
+  ];
+  const CALM_DURATIONS = [3, 5, 10];
+  const CALM_BASE_CYCLE = 10;   // 6 / min
+  const CALM_GOAL_CYCLE = 30;   // 2 / min
+
+  let calmIdx = 0;
+  let calmDurationMin = 5;
+  let calmPhase = 'idle';       // idle | inhale | exhale | done
+  let calmPhaseStart = 0;
+  let calmSessionStart = 0;
+  let calmTicker = null;
+
+  const calmOrb = $('calmOrb'), calmPhaseEl = $('calmPhase'), calmCountEl = $('calmCount');
+  const calmStartBtn = $('calmStartBtn'), calmStopBtn = $('calmStopBtn'), calmPost = $('calmPost');
+
+  function loadCalm() { try { return JSON.parse(localStorage.getItem(CALM_KEY)) || []; } catch(e) { return []; } }
+  function saveCalmEntry(entry) {
+    try {
+      const all = loadCalm();
+      all.unshift(entry);
+      localStorage.setItem(CALM_KEY, JSON.stringify(all.slice(0, 400)));
+    } catch(e) {}
+  }
+  function cadence() { return CADENCES[calmIdx]; }
+  function cadenceCycle(c) { return c.inhale + c.exhale; }
+  function calmBusy() { return calmPhase === 'inhale' || calmPhase === 'exhale'; }
+
+  function renderCadencePicker() {
+    $('cadencePicker').innerHTML = CADENCES.map((c, i) =>
+      `<button data-cad="${i}" class="${i === calmIdx ? 'active' : ''}">${c.bpm}/min<small>${c.inhale} in · ${c.exhale} out</small></button>`
+    ).join('');
+    $('calmDurationPicker').innerHTML = CALM_DURATIONS.map(d =>
+      `<button data-dur="${d}" class="${d === calmDurationMin ? 'active' : ''}">${d} min</button>`
+    ).join('');
+  }
+
+  function startCalmPhase(p) {
+    const c = cadence();
+    calmPhase = p;
+    calmPhaseStart = Date.now();
+    if (p === 'inhale') {
+      calmOrb.className = 'calm-orb';
+      calmOrb.style.transitionDuration = c.inhale + 's';
+      calmOrb.style.transform = 'scale(1)';
+      calmPhaseEl.textContent = 'Breathe in';
+      calmCountEl.textContent = c.inhale;
+      beep(440, 0.14, 0.16); buzz(60);
+    } else {
+      calmOrb.className = 'calm-orb exhale';
+      calmOrb.style.transitionDuration = c.exhale + 's';
+      calmOrb.style.transform = 'scale(0.45)';
+      calmPhaseEl.textContent = 'Breathe out';
+      calmCountEl.textContent = c.exhale;
+      beep(294, 0.18, 0.16); buzz(90);
+    }
+  }
+
+  function calmTick() {
+    const c = cadence();
+    const now = Date.now();
+    const totalElapsed = (now - calmSessionStart) / 1000;
+    const phaseLen = calmPhase === 'inhale' ? c.inhale : c.exhale;
+    const phaseElapsed = (now - calmPhaseStart) / 1000;
+    calmCountEl.textContent = Math.max(0, Math.ceil(phaseLen - phaseElapsed));
+    if (phaseElapsed >= phaseLen) {
+      // Finish on a completed exhale once the target duration is reached — clean stop.
+      if (calmPhase === 'exhale' && totalElapsed >= calmDurationMin * 60) {
+        calmStop(true);
+        beep(1046, 0.4, 0.35); setTimeout(() => beep(1318, 0.5, 0.3), 180);
+        return;
+      }
+      startCalmPhase(calmPhase === 'inhale' ? 'exhale' : 'inhale');
+    }
+  }
+
+  function startCalm() {
+    calmPost.style.display = 'none';
+    calmSessionStart = Date.now();
+    requestWakeLock();
+    calmStartBtn.textContent = 'Stop';
+    startCalmPhase('inhale');
+    clearInterval(calmTicker);
+    calmTicker = setInterval(calmTick, 100);
+  }
+
+  function calmStop(finished) {
+    clearInterval(calmTicker); calmTicker = null;
+    calmOrb.className = 'calm-orb';
+    calmOrb.style.transitionDuration = '0.6s';
+    calmOrb.style.transform = 'scale(0.45)';
+    calmStartBtn.textContent = 'Start';
+    releaseWakeLock();
+    if (finished) {
+      calmPhase = 'done';
+      calmPhaseEl.textContent = 'Done';
+      calmCountEl.textContent = '✓';
+      calmPost.style.display = 'block';
+    } else {
+      calmPhase = 'idle';
+      calmPhaseEl.textContent = 'Ready';
+      calmCountEl.textContent = '';
+    }
+  }
+
+  function logCalm(comfortable) {
+    const c = cadence();
+    saveCalmEntry({
+      date: new Date().toISOString(),
+      cycleSec: cadenceCycle(c),
+      inhale: c.inhale, exhale: c.exhale,
+      durationMin: calmDurationMin,
+      comfortable: !!comfortable
+    });
+    calmPost.style.display = 'none';
+    calmPhase = 'idle';
+    calmPhaseEl.textContent = 'Ready';
+    calmCountEl.textContent = '';
+    renderJourney();
+  }
+
+  function renderJourney() {
+    const entries = loadCalm();
+    const comfy = entries.filter(e => e.comfortable);
+    const slowest = comfy.length ? Math.max(...comfy.map(e => e.cycleSec)) : null;
+    const bpmOf = cyc => { const v = 60 / cyc; return (Math.round(v * 10) / 10) + '/min'; };
+    const pct = slowest ? Math.min(100, Math.max(0, Math.round((slowest - CALM_BASE_CYCLE) / (CALM_GOAL_CYCLE - CALM_BASE_CYCLE) * 100))) : 0;
+    const totalMin = entries.reduce((a, e) => a + (e.durationMin || 0), 0);
+    $('journeyCard').innerHTML = `
+      <div class="journey-head">
+        <div class="journey-title">Journey · toward 2 / min</div>
+        <div class="journey-sub" style="margin:0">${entries.length} session${entries.length !== 1 ? 's' : ''} · ${totalMin} min</div>
+      </div>
+      <div class="journey-numbers">
+        <div class="journey-best">${slowest ? bpmOf(slowest) : '—'}</div>
+        <div class="journey-target">${slowest ? 'slowest comfortable pace · ' + pct + '% to 2/min' : 'log a comfortable session to start the journey'}</div>
+      </div>
+      <div class="journey-bar"><div class="journey-bar-fill" style="width:${pct}%"></div></div>
+      <div class="journey-sub">Hold a pace comfortably a few sessions before stepping slower — never strain.</div>
+    `;
+  }
+
+  calmStartBtn.addEventListener('click', () => {
+    if (calmBusy()) calmStop(false); else startCalm();
+  });
+  calmStopBtn.addEventListener('click', () => calmStop(false));
+  $('cadencePicker').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || calmBusy()) return;
+    calmIdx = +b.dataset.cad; renderCadencePicker();
+  });
+  $('calmDurationPicker').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || calmBusy()) return;
+    calmDurationMin = +b.dataset.dur; renderCadencePicker();
+  });
+  $('calmYes').addEventListener('click', () => logCalm(true));
+  $('calmNo').addEventListener('click', () => logCalm(false));
+
   // ---------- init ----------
   buildPlan();
   updateUI();
   renderSuggestion();
   renderProfile();
+  renderCadencePicker();
+  renderJourney();
 </script>
 
 </body>

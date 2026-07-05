@@ -24,6 +24,16 @@ Personal training tool, not a venture. Goal: Aaron holds his breath 2:00
   Profile under `co2trainer_profile_v1`: `{name, goalSec?, goalDate?}` (defaults
   2:00 / 2026-10-31). This is a freediving dry-training app — safety copy must
   keep: dry-only, buddy for any in-water work, never hyperventilate, course names.
+  `urge` and begin-exhale are SEPARATE events in all modes (First-urge button/`U`
+  key marks the involuntary urge; the stage tap begins the voluntary exhale). Unmarked
+  urge → null, except comfort mode falls back to `urge = pure`. Goal is judged on
+  `urge` (best urge-free, 14-day window).
+- **Calm tab** (parasympathetic breathing) is a SEPARATE feature with its own store
+  `co2trainer_calm_v1` — array of `{date, cycleSec, inhale, exhale, durationMin,
+  comfortable}`. It must NEVER read or write `holds[]`/PB/hold-goal (verified by a
+  no-leak assertion). Exhale-weighted cadences 6→2 breaths/min; Journey metric =
+  slowest cadence flagged comfortable; north star 2/min (30s cycle). Reuses the
+  shared timer/wake-lock/beep/buzz helpers.
   Exports are `{app, owner, exported, sessions[]}`; import must also accept the
   old bare-array format, and warns when `owner` ≠ this device's profile name.
 - **Timing is timestamp-based** (`Date.now()` deltas), never tick-counting —
