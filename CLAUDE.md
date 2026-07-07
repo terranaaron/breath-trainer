@@ -7,7 +7,19 @@ Personal training tool, not a venture. Goal: Aaron holds his breath 2:00
 
 - **Single file.** The entire app is `index.html` — inline CSS + JS, no build step,
   no dependencies, no external requests. Deployment is "push to main"; GitHub Pages
-  serves it. Keep it that way.
+  serves it. Keep it that way. The Android app (`native/`) is a Capacitor shell that
+  copies this same `index.html` — one source of truth for web and native.
+- **Storage goes through `Store`** (in-memory cache + write-through), never raw
+  `localStorage`. Web backend: localStorage. Native backend: SQLCipher-encrypted
+  SQLite (`@capacitor-community/sqlite`), secret in Android Keystore behind a
+  biometric/device-credential gate (`androidBiometric` in `native/capacitor.config.json`).
+  Native plugins are reached via `window.Capacitor.Plugins.*` (no bundler). Auth
+  failure shows the lock screen with retry; after 2 failures an explicit
+  "continue without encryption" escape hatch sets `bt_native_plain_v1`.
+- **Android release**: Actions workflow `android-release.yml` (manual dispatch,
+  version input) → signed APK on a GitHub release. Signing keystore: gitignored
+  `native/keys/` + repo secrets ANDROID_KEYSTORE_*. **Same key forever** — losing it
+  breaks in-place updates (= user data loss on reinstall). minSdk 24 (Android 7).
 - **Data compatibility.** Session history lives in `localStorage` under
   `co2trainer_sessions_v1` as an array of `{date, mode?, level?, targets?, holds[]}`.
   Old records have no `mode` (treat as `co2`). Never break reads of existing records —

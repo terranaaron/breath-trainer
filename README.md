@@ -40,6 +40,23 @@ and haptic cues. The **Journey** card tracks your slowest *comfortable* cadence 
 time, toward a 2-breaths-per-minute (30-second cycle) north star — comfort-bounded,
 never strained. Calm data is stored separately and never affects your hold stats.
 
+## Android app (recommended for daily training)
+
+A native Android build lives in [`native/`](native/) — same app, but your data gets
+real custody: an **SQLCipher-encrypted database** in the app's private sandbox, with
+the key in the Android Keystore behind your **fingerprint/face/PIN**. No browser
+container splits, no eviction. Plus a silent on-device auto-backup after every session.
+
+**Install:** grab the APK from the repo's [Releases](../../releases) page on your
+Android phone → download → allow "install unknown apps" for your browser (one-time)
+→ install. Requires Android 7+. Updates: download the new APK and install over the
+old one — data is preserved (same signing key).
+
+**Build/release** (maintainer): Actions → *Android release APK* → Run workflow with a
+version number. CI builds, signs (keystore in repo secrets; local copy in gitignored
+`native/keys/` — **back that folder up**, losing it breaks in-place updates), and
+publishes the APK as a GitHub release.
+
 ## Use it on your iPhone
 
 1. Open the live link in **Safari**

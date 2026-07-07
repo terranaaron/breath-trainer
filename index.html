@@ -345,6 +345,13 @@
 
 <input type="file" id="importFile" accept=".json,application/json" style="display:none">
 
+<div id="lockScreen" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:50; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:32px; text-align:center;">
+  <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;">Breath Trainer</div>
+  <div style="font-size:13px;color:var(--ink-dim);line-height:1.6;">Your training log is encrypted.<br>Unlock with fingerprint, face, or device PIN.</div>
+  <button id="unlockBtn" style="padding:14px 32px;background:var(--gold);color:var(--bg);border:none;border-radius:12px;font-size:14px;font-weight:600;letter-spacing:1px;font-family:inherit;cursor:pointer;">Unlock</button>
+  <button id="plainBtn" style="display:none;padding:10px 20px;background:transparent;color:var(--ink-faint);border:1px solid var(--line);border-radius:10px;font-size:11px;font-family:inherit;cursor:pointer;">Continue without encryption (not recommended)</button>
+</div>
+
 <script>
   const PROFILE_KEY = 'co2trainer_profile_v1';
   const CO2_REST_PATTERN = [105, 90, 75, 60, 45, 30, 20, 15];
@@ -360,6 +367,85 @@
   const CO2_FLOOR = 20, CO2_CAP = 120;
   const TAP_DEBOUNCE_MS = 400;
   const COMFORT_WINDOW_DAYS = 14;
+  const CALM_KEY = 'co2trainer_calm_v1';
+  const DB_NAME = 'breath';
+  const PLAIN_FLAG = 'bt_native_plain_v1';
+  const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  function sq() { return window.Capacitor.Plugins.CapacitorSQLite; }
+
+  // ---------- storage engine ----------
+  // Web: localStorage. Native (Capacitor): SQLCipher-encrypted SQLite, secret in
+  // Keystore behind a biometric/device-credential gate. All app code reads/writes
+  // synchronously through Store's in-memory cache; persistence is write-through.
+  const Store = {
+    cache: {},
+    backend: 'local',
+    writeChain: Promise.resolve(),
+    keys() { return [STORAGE_KEY, PROFILE_KEY, CALM_KEY]; },
+    get(key, fallback) {
+      const v = this.cache[key];
+      return (v === undefined || v === null) ? fallback : v;
+    },
+    set(key, value) {
+      this.cache[key] = value;
+      const json = JSON.stringify(value);
+      if (this.backend === 'sqlite') {
+        this.writeChain = this.writeChain.then(() =>
+          sq().run({ database: DB_NAME, statement: 'INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?);', values: [key, json], transaction: false })
+        ).catch(e => console.error('persist failed', e));
+      } else {
+        try { localStorage.setItem(key, json); } catch(e) {}
+      }
+    },
+    remove(key) {
+      delete this.cache[key];
+      if (this.backend === 'sqlite') {
+        this.writeChain = this.writeChain.then(() =>
+          sq().run({ database: DB_NAME, statement: 'DELETE FROM kv WHERE key = ?;', values: [key], transaction: false })
+        ).catch(e => console.error('persist failed', e));
+      } else {
+        try { localStorage.removeItem(key); } catch(e) {}
+      }
+    },
+    loadLocalIntoCache() {
+      this.keys().forEach(k => {
+        try { const raw = localStorage.getItem(k); if (raw != null) this.cache[k] = JSON.parse(raw); } catch(e) {}
+      });
+    },
+    async init() {
+      let plain = false;
+      try { plain = localStorage.getItem(PLAIN_FLAG) === '1'; } catch(e) {}
+      if (!NATIVE || plain) {
+        this.backend = 'local';
+        this.loadLocalIntoCache();
+        try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
+        return;
+      }
+      const s = sq();
+      const stored = await s.isSecretStored().catch(() => ({ result: false }));
+      if (!stored.result) {
+        const bytes = new Uint8Array(32);
+        crypto.getRandomValues(bytes);
+        const pass = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        await s.setEncryptionSecret({ passphrase: pass });
+      }
+      await s.createConnection({ database: DB_NAME, encrypted: true, mode: 'secret', version: 1, readonly: false });
+      await s.open({ database: DB_NAME, readonly: false });
+      await s.execute({ database: DB_NAME, statements: 'CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);', transaction: false });
+      const res = await s.query({ database: DB_NAME, statement: 'SELECT key, value FROM kv;', values: [] });
+      (res.values || []).forEach(row => { try { this.cache[row.key] = JSON.parse(row.value); } catch(e) {} });
+      this.backend = 'sqlite';
+      // one-time pickup of any WebView localStorage remnants (e.g. pre-encryption builds)
+      this.keys().forEach(k => {
+        if (this.cache[k] === undefined) {
+          try {
+            const raw = localStorage.getItem(k);
+            if (raw != null) { this.cache[k] = JSON.parse(raw); this.set(k, this.cache[k]); }
+          } catch(e) {}
+        }
+      });
+    }
+  };
 
   let mode = 'comfort';
   let co2Tier = 0;
@@ -390,25 +476,33 @@
   const roundsEl = $('rounds'), levelPicker = $('levelPicker'), modePicker = $('modePicker');
   const modeNote = $('modeNote'), suggestionEl = $('suggestion');
 
-  // ---------- storage ----------
-  function loadSessions() {
-    try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }
-    catch(e) { return []; }
-  }
+  // ---------- storage (all through Store) ----------
+  function loadSessions() { return Store.get(STORAGE_KEY, []); }
   function saveSession(session) {
+    const all = loadSessions().slice();
+    all.unshift(session);
+    Store.set(STORAGE_KEY, all.slice(0, 400));
+    autoBackup();
+  }
+  function overwriteSessions(all) { Store.set(STORAGE_KEY, all.slice(0, 400)); }
+  function clearSessions() { Store.remove(STORAGE_KEY); }
+  function sessionMode(s) { return s.mode || 'co2'; }
+  function loadProfile() { return Store.get(PROFILE_KEY, {}); }
+  function saveProfile(p) { Store.set(PROFILE_KEY, p); }
+  function exportPayload() {
+    return { app: 'breath-trainer', owner: profileName() || null, exported: new Date().toISOString(), sessions: loadSessions() };
+  }
+  function autoBackup() {
+    // Native only: silently keep a second on-device copy after every session.
+    if (!NATIVE || Store.backend !== 'sqlite') return;
     try {
-      const all = loadSessions();
-      all.unshift(session);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(all.slice(0, 400)));
+      window.Capacitor.Plugins.Filesystem.writeFile({
+        path: 'breath-trainer-autobackup.json',
+        data: JSON.stringify(exportPayload()),
+        directory: 'DOCUMENTS', encoding: 'utf8'
+      }).catch(() => {});
     } catch(e) {}
   }
-  function overwriteSessions(all) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(all.slice(0, 400))); } catch(e) {}
-  }
-  function clearSessions() { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} }
-  function sessionMode(s) { return s.mode || 'co2'; }
-  function loadProfile() { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch(e) { return {}; } }
-  function saveProfile(p) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e) {} }
   function profileName() { return (loadProfile().name || '').trim(); }
   function getGoal() {
     const p = loadProfile();
@@ -1045,6 +1139,17 @@
     }).join('');
   }
 
+  function backupNudgeHtml(sessions) {
+    if (!sessions.length) return '';
+    const p = loadProfile();
+    const days = p.lastExport ? Math.floor((Date.now() - new Date(p.lastExport).getTime()) / 86400000) : null;
+    const stale = days == null || days >= 7;
+    const txt = days == null ? 'never backed up — export a copy'
+      : days === 0 ? 'backed up today' : `last backup ${days} day${days === 1 ? '' : 's'} ago`;
+    const plainWarn = (NATIVE && Store.backend === 'local') ? ' · ⚠ unencrypted mode' : '';
+    return `<div style="text-align:center;font-size:11px;letter-spacing:1px;margin-top:12px;color:${stale ? 'var(--hold)' : 'var(--ink-dim)'}">${stale ? '⚠ ' : ''}${txt}${plainWarn}</div>`;
+  }
+
   function sessionDesc(s) {
     const m = sessionMode(s);
     const best = Math.max(...s.holds.map(holdTotal));
@@ -1121,6 +1226,7 @@
           </div>
         `;
       }).join('')}
+      ${backupNudgeHtml(sessions)}
       <div class="data-btns">
         <button id="exportBtn">Export data</button>
         <button id="importBtn">Import</button>
@@ -1136,15 +1242,26 @@
     $('clearBtn').addEventListener('click', () => {
       if (confirm('Delete all session history? This cannot be undone.')) { clearSessions(); renderHistory(); }
     });
-    $('exportBtn').addEventListener('click', () => {
+    $('exportBtn').addEventListener('click', async () => {
       const name = profileName();
-      const payload = { app: 'breath-trainer', owner: name || null, exported: new Date().toISOString(), sessions: loadSessions() };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'breath-trainer-' + (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'data') + '.json';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      const json = JSON.stringify(exportPayload(), null, 2);
+      const fname = 'breath-trainer-' + (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'data') + '.json';
+      if (NATIVE) {
+        try {
+          const P = window.Capacitor.Plugins;
+          const w = await P.Filesystem.writeFile({ path: fname, data: json, directory: 'DOCUMENTS', encoding: 'utf8' });
+          try { await P.Share.share({ title: 'Breath Trainer backup', url: w.uri, dialogTitle: 'Save your backup' }); } catch(e) {}
+        } catch(e) { alert('Export failed: ' + e.message); return; }
+      } else {
+        const blob = new Blob([json], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fname;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      }
+      saveProfile({ ...loadProfile(), lastExport: new Date().toISOString() });
+      renderHistory();
     });
     $('importBtn').addEventListener('click', () => $('importFile').click());
   }
@@ -1201,8 +1318,7 @@
   });
 
   // ---------- calm (parasympathetic breathing) ----------
-  // Own storage key, fully walled off from holds[] / PB / hold goal.
-  const CALM_KEY = 'co2trainer_calm_v1';
+  // Own storage key (CALM_KEY), fully walled off from holds[] / PB / hold goal.
   const CADENCES = [
     { bpm: 6, inhale: 4, exhale: 6 },
     { bpm: 5, inhale: 5, exhale: 7 },
@@ -1224,13 +1340,11 @@
   const calmOrb = $('calmOrb'), calmPhaseEl = $('calmPhase'), calmCountEl = $('calmCount');
   const calmStartBtn = $('calmStartBtn'), calmStopBtn = $('calmStopBtn'), calmPost = $('calmPost');
 
-  function loadCalm() { try { return JSON.parse(localStorage.getItem(CALM_KEY)) || []; } catch(e) { return []; } }
+  function loadCalm() { return Store.get(CALM_KEY, []); }
   function saveCalmEntry(entry) {
-    try {
-      const all = loadCalm();
-      all.unshift(entry);
-      localStorage.setItem(CALM_KEY, JSON.stringify(all.slice(0, 400)));
-    } catch(e) {}
+    const all = loadCalm().slice();
+    all.unshift(entry);
+    Store.set(CALM_KEY, all.slice(0, 400));
   }
   function cadence() { return CADENCES[calmIdx]; }
   function cadenceCycle(c) { return c.inhale + c.exhale; }
@@ -1365,13 +1479,34 @@
   $('calmYes').addEventListener('click', () => logCalm(true));
   $('calmNo').addEventListener('click', () => logCalm(false));
 
-  // ---------- init ----------
-  buildPlan();
-  updateUI();
-  renderSuggestion();
-  renderProfile();
-  renderCadencePicker();
-  renderJourney();
+  // ---------- boot ----------
+  function initApp() {
+    buildPlan();
+    updateUI();
+    renderSuggestion();
+    renderProfile();
+    renderCadencePicker();
+    renderJourney();
+  }
+  let unlockAttempts = 0;
+  async function boot() {
+    try {
+      await Store.init();
+      $('lockScreen').style.display = 'none';
+      initApp();
+    } catch (e) {
+      // Native auth cancelled/failed — keep the data locked, offer retry.
+      unlockAttempts++;
+      $('lockScreen').style.display = 'flex';
+      if (unlockAttempts >= 2) $('plainBtn').style.display = 'block';
+    }
+  }
+  $('unlockBtn').addEventListener('click', boot);
+  $('plainBtn').addEventListener('click', () => {
+    try { localStorage.setItem(PLAIN_FLAG, '1'); } catch(e) {}
+    boot();
+  });
+  boot();
 </script>
 
 </body>

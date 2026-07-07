@@ -1,0 +1,18 @@
+{
+  "appId": "io.github.terranaaron.breathtrainer",
+  "appName": "Breath Trainer",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorSQLite": {
+      "androidIsEncryption": true,
+      "androidBiometric": {
+        "biometricAuth": true,
+        "biometricTitle": "Unlock Breath Trainer",
+        "biometricSubTitle": "Your training log is encrypted"
+      }
+    }
+  }
+}
