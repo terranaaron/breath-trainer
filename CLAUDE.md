@@ -55,8 +55,13 @@ Personal training tool, not a venture. Goal: Aaron holds his breath 2:00
 
 ## Deploy
 
-`git push` to `main` → GitHub Pages redeploys automatically (~1 min).
-Live at: https://terranaaron.github.io/breath-trainer/
+`git push` to `main` → GitHub Pages redeploys automatically. Live at:
+https://terranaaron.github.io/breath-trainer/
+Pages builds have stalled 8+ min repeatedly; the fix is requesting a fresh build:
+`gh api -X POST repos/terranaaron/breath-trainer/pages/builds` — then poll again.
+Android: dispatch `android-release.yml` with a version input → signed APK on a
+GitHub release. Windows gotcha: files CI executes need their exec bit set in git
+(`git update-index --chmod=+x`) — a bare Windows commit strips it (bit gradlew once).
 
 ## QR code
 
@@ -64,8 +69,32 @@ Live at: https://terranaaron.github.io/breath-trainer/
 `python -c "import segno; segno.make('https://terranaaron.github.io/breath-trainer/', error='h').save('breath-trainer-qr.svg', scale=8, border=4, dark='#0f1720', light='#fff')"`
 (also emit the `.png`). If the live URL ever changes, regenerate both and re-verify by scanning.
 
-## Verify a change
+## Verify a change (the harness pattern — no test framework, this is the gate)
 
-`node --check` the extracted script block, then render with headless Edge
-(`msedge --headless=new --dump-dom file:///...`) and confirm rounds + suggestion
-render. There are no tests; the smoke render is the gate.
+1. `node --check` the extracted `<script>` block.
+2. **Iframe harnesses** in the session scratchpad: a small HTML page that seeds
+   `localStorage` (file:// pages share one origin), loads the app in an iframe,
+   drives it (clicks/taps via `setTimeout` chains), and writes assertions into its
+   own DOM. Render with headless Edge:
+   `msedge --headless=new --allow-file-access-from-files --virtual-time-budget=N --dump-dom <harness>`
+   — virtual time fast-forwards timers, so whole timed sessions (prep→hold→taps→rest)
+   run in seconds with exact expected splits.
+3. Mandatory gates: **multi-generation storage seed** (int holds, gen-2 objects,
+   gen-3 with urge, all in one history) must render; **no-leak assertion** (calm
+   flows leave `co2trainer_sessions_v1` null); flow harnesses for any changed
+   state-machine path.
+4. Git Bash `echo` mangles backslashes in JSON — pipe test payloads from files,
+   never inline. When a harness fails, suspect the harness first (two of two
+   harness failures so far were harness bugs, not app bugs).
+
+## Status & open loops (2026-07-08)
+
+- Web + Android v1.0.0 shipped. **UNTESTED on Aaron's Android device**: install
+  flow, biometric/PIN prompt on old hardware (needs Android 7+), the
+  no-auth-configured fallback, share-sheet export, import. Ask how the device
+  test went before building more native features.
+- Aaron's original iPhone history is gone (iOS Safari-vs-home-screen container
+  split, 2026-07-06) — he restarted ~2026-07-05. Long-shot: an old export JSON in
+  iPhone Files would import.
+- Deferred/parked: Set-Departure table mode (revisit when comfortable hold >1:30),
+  iOS TestFlight path, guided breathe-up before max tests, box breathing.
