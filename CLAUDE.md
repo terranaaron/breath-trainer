@@ -87,12 +87,14 @@ GitHub release. Windows gotcha: files CI executes need their exec bit set in git
    never inline. When a harness fails, suspect the harness first (two of two
    harness failures so far were harness bugs, not app bugs).
 
-## Status & open loops (2026-07-08)
+## Status & open loops (2026-07-13)
 
-- Web + Android v1.0.0 shipped. **UNTESTED on Aaron's Android device**: install
-  flow, biometric/PIN prompt on old hardware (needs Android 7+), the
+- Web + Android v1.0.0 shipped 2026-07-07. **UNTESTED on Aaron's Android device** —
+  he plans to enable/install it during the week of 2026-07-13. To verify with him:
+  install flow, biometric/PIN prompt on old hardware (needs Android 7+), the
   no-auth-configured fallback, share-sheet export, import. Ask how the device
-  test went before building more native features.
+  test went before building more native features; if the week passes silently,
+  nudge once.
 - Aaron's original iPhone history is gone (iOS Safari-vs-home-screen container
   split, 2026-07-06) — he restarted ~2026-07-05. Long-shot: an old export JSON in
   iPhone Files would import.
